@@ -1,0 +1,10 @@
+{
+  "name": "Predict Total Reward test syllabus with L2Arcade data",
+  "author": "Chace Ashcraft <Chace.Ashcraft@jhuapl.edu>",
+  "contains": "datasets",
+  "default_params": {"batch_size": 4},
+  "instructions": [
+    { "$dataset": "$l2arcadekit:PredictPongTotalReward", "num_batches": 1},
+    {"$repeat": { "$dataset": "$l2arcadekit:PredictFreewayTotalReward", "num_batches": 1}, "count": 2}
+  ]
+}

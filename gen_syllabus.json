@@ -1,0 +1,20 @@
+{
+  "name": "Test generation syllabus with L2Arcade episodes",
+  "author": "Chace Ashcraft <Chace.Ashcraft@jhuapl.edu>",
+  "contains": "episodes",
+  "default_params": {},
+  "instructions": [
+    {"$repeat": { "$episode": "$l2arcadekit.l2agames:Freeway"}, "count": 10},
+    {"$repeat": { "$episode": "$l2arcadekit.l2agames:BallvPaddle"}, "count": 10},
+
+    {"$repeat": { "$episode": "$l2arcadekit.l2agames:Pong"}, "count": 10},
+    {"$repeat": { "$episode": "$l2arcadekit.l2agames:Pong", "bot/paddle/width": 0.15, "bg_color": [10,10,10] }, "count": 10},
+    {"$repeat": { "$episode": "$l2arcadekit.l2agames:Pong", "bot/paddle/width": 0.2,  "bg_color": [100,100,1] }, "count": 10},
+    {"$repeat": { "$episode": "$l2arcadekit.l2agames:Pong", "bot/paddle/width": 0.3,  "bg_color": [1,50,100]  }, "count": 10},
+
+    {"$repeat": { "$episode": "$l2arcadekit.l2agames:Breakout"}, "count": 10},
+    {"$repeat": { "$episode": "$l2arcadekit.l2agames:Breakout", "region/rows": 6 }, "count": 10},
+    {"$repeat": { "$episode": "$l2arcadekit.l2agames:Breakout", "region/rows": 8 }, "count": 10},
+    {"$repeat": { "$episode": "$l2arcadekit.l2agames:Breakout", "region/rows": 11 }, "count": 10}
+  ]
+}
