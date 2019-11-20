@@ -71,7 +71,7 @@ class RewardPredictor(nn.Module):
             cdetached = None
             c = None
 
-        y_hat = { 'reward': y, 'color': c, 'colorDetached':cdetached }
+        y_hat = { 'reward': y, 'color': c, 'adversary':cdetached }
 
         return y_hat #Question: should I make discriminator separate,
                                     # and update its weights before redoing calculation?
@@ -90,9 +90,21 @@ class RewardPredictor(nn.Module):
 
 
 class OurOptimizer:
-    @staticmethod
-    def calculate_loss(y, y_hat): #y and y_hat should be dicts of all info
-        pass
+    def __init__(self, lmbda=0.5):
+        self.lmbda = lmbda
+
+    def calculate_loss(self, y, y_hat): #y and y_hat should be dicts of all info
+        reward_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['reward'], y['reward'])
+
+        if y['color'] is not None and y['adversary'] is not None:
+            color_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['color'], 1-y['color'])
+            adversary_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['adversary'], y['adversary'])
+        else:
+            color_loss = 0
+            adversary_loss = None
+
+        loss = {'reward': reward_loss+self.lmbda*color_loss, 'adversary': adversary_loss}
+        return loss
         # loss y['reward'], y_hat['reward']
         # loss y['color'], y_hat['color'] (negative of adversary loss)
         # loss y['adversary'], y_hat['adversary']
