@@ -19,70 +19,13 @@ import numpy as np
 import learnkit
 from learnkit.utils import module_relative_file
 
-
-class YourModel:
-    """
-    Example of how one might set up a model to work with LearnKit. Define however desired or needed, to include:
-        - methods and attributes
-        - method and attribute naming
-        - variable typing
-        - use of task spaces and input/output spaces
-        - inference method
-        - weight update method
-    """
-    def __init__(self):
-        self.task_spaces = None
-        self.current_input_spaces = None
-        self.current_output_spaces = None
-
-    def set_task_spaces(self, task_spaces):
-        # setup the model to use the defined task spaces, i.e. all input/output spaces for a syllabus
-        self.task_spaces = task_spaces
-
-    def set_input_space(self, input_spaces):
-        self.current_input_spaces = input_spaces
-
-    def set_output_space(self, output_spaces):
-        self.current_output_spaces = output_spaces
-
-    def forward(self, x):
-        # return a dictionary (with keys as defined by self.output_space)
-        # with a randomly chosen label for each output space
-        batch_size = list(x.values())[0].shape[0]
-        out = {}
-        for key in self.current_output_spaces.keys():
-            out[key] = np.array([self.current_output_spaces[key].sample() for i in range(batch_size)])
-        return out
-
-    def update(self, loss):
-        # perform backpropagation here
-        pass
-
-
-class YourOptimizer:
-    """
-    Example optimizer object with possible loss function. Define however desired or needed, to include:
-        - methods and attributes
-        - method and attribute naming
-        - variable typing
-        - optimization strategy
-        - loss function
-    """
-    @staticmethod
-    def calculate_loss(y, y_hat):
-        # return a dictionary (with keys as defined by self.output_space)
-        # with RMS loss for each space. Assume that y and y_hat satisfy
-        # self.output_space specifications
-        loss = {}
-        for key in y.keys():
-            loss[key] = np.sqrt(np.mean((y_hat[key] - y[key])**2))
-        return loss
+from models import OurRewardPredictor, OurOptimizer
 
 
 def train_model(path_to_syllabus):
     # Instantiate Model, optimizer, training parameters, etc.
-    model = YourModel()
-    optim = YourOptimizer()
+    model = OurRewardPredictor()
+    optim = OurOptimizer()
 
     cl = learnkit.Classroom()
     with cl.load(path_to_syllabus) as syllabus:

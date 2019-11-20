@@ -9,9 +9,14 @@ import torch.optim as optim
 from itertools import chain
 
 # Should I have max pools like alexnet?
-class RewardPredictor(nn.Module):
+class OurRewardPredictor(nn.Module):
     def __init__(self, color_adversary=False):
-        super(RewardPredictor, self).__init__()
+        super(OurRewardPredictor, self).__init__()
+
+        self.task_spaces = None
+        self.current_input_spaces = None
+        self.current_output_spaces = None
+
         self.color_adversary = color_adversary
         self.features = nn.Sequential(
             nn.Conv2d(3, 64, 5, stride=2, padding=2), # 3x128x128 --> 64x64x64 =lower((128-5+2*2)/2)+1
@@ -54,13 +59,24 @@ class RewardPredictor(nn.Module):
             self.color_discriminator = None
             self.disc_optimizer = None
 
+    # These don't affect the rest of the model currently
+    def set_task_spaces(self, task_spaces):
+        self.task_spaces = task_spaces
+
+    def set_input_space(self, input_spaces):
+        self.current_input_spaces = input_spaces
+
+    def set_output_space(self, output_spaces):
+        self.current_output_spaces = output_spaces
 
     def forward(self, x):
         # x probably has shape (batchsize x 3 x 1 x 128 x 128)
         # x 1 is nframes
+        x = x['10_frames']
         x = torch.Tensor(x) #From numpy array to Tensor
-        x = x.squeeze(2)
+        x = x[:,:,0,:,:].squeeze(2)
         x = self.features(x)
+        x = x.view(x.size(0),-1)
         y = self.reward_classifier(x)
 
         if self.color_adversary:
@@ -76,34 +92,34 @@ class RewardPredictor(nn.Module):
         return y_hat #Question: should I make discriminator separate,
                                     # and update its weights before redoing calculation?
 
-
-     def update(self, loss):
-        mainLoss = loss['reward'] #includes adversarial color loss
-        mainLoss.backward()
-        self.main_optimizer.step()
-        if self.color_adversary:
-            adversaryLoss = loss['adversary']
-            adversaryLoss.backward()
-            self.disc_optimizer.step()
-
-
+    def update(self, loss):
+       mainLoss = loss['reward_loss_grad'] #includes adversarial color loss
+       mainLoss.backward()
+       self.main_optimizer.step()
+       if self.color_adversary:
+           adversaryLoss = loss['adversary_loss_grad']
+           adversaryLoss.backward()
+           self.disc_optimizer.step()
 
 
 class OurOptimizer:
-    def __init__(self, lmbda=0.5):
+    def __init__(self, lmbda=1):
         self.lmbda = lmbda
 
     def calculate_loss(self, y, y_hat): #y and y_hat should be dicts of all info
-        reward_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['reward'], y['reward'])
+        reward_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['reward'], torch.Tensor(y['reward']))
 
         if y['color'] is not None and y['adversary'] is not None:
-            color_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['color'], 1-y['color'])
-            adversary_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['adversary'], y['adversary'])
+            color_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['color'], 1-torch.Tensor(y['color']))
+            adversary_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['adversary'], torch.Tensor(y['adversary']))
         else:
             color_loss = 0
             adversary_loss = None
 
-        loss = {'reward': reward_loss+self.lmbda*color_loss, 'adversary': adversary_loss}
+        reward_loss_grad = reward_loss+self.lmbda*color_loss
+
+        loss = {'reward_loss_grad': reward_loss_grad, 'adversary_loss_grad': adversary_loss,
+                 'reward': reward_loss_grad.detach().numpy()} # numpy for benefit of TEF
         return loss
         # loss y['reward'], y_hat['reward']
         # loss y['color'], y_hat['color'] (negative of adversary loss)
