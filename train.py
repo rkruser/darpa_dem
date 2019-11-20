@@ -24,7 +24,7 @@ from models import OurRewardPredictor, OurOptimizer
 
 def train_model(path_to_syllabus):
     # Instantiate Model, optimizer, training parameters, etc.
-    model = OurRewardPredictor()
+    model = OurRewardPredictor(color_adversary=True)
     optim = OurOptimizer()
 
     cl = learnkit.Classroom()

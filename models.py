@@ -87,7 +87,8 @@ class OurRewardPredictor(nn.Module):
             cdetached = None
             c = None
 
-        y_hat = { 'reward': y, 'color': c, 'adversary':cdetached }
+        y_hat = { 'reward_loss_pred': y, 'color_loss_pred': c, 'adversary_loss_pred':cdetached,
+                  'reward': y.detach().numpy()  }
 
         return y_hat #Question: should I make discriminator separate,
                                     # and update its weights before redoing calculation?
@@ -107,19 +108,22 @@ class OurOptimizer:
         self.lmbda = lmbda
 
     def calculate_loss(self, y, y_hat): #y and y_hat should be dicts of all info
-        reward_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['reward'], torch.Tensor(y['reward']))
+        reward_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['reward_loss_pred'], 
+                        torch.Tensor(y['reward']))
 
-        if y['color'] is not None and y['adversary'] is not None:
-            color_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['color'], 1-torch.Tensor(y['color']))
-            adversary_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['adversary'], torch.Tensor(y['adversary']))
+        if y_hat['color_loss_pred'] is not None and y_hat['adversary_loss_pred'] is not None:
+            color_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['color_loss_pred'], 
+                            1-torch.Tensor(y['color']))
+            adversary_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['adversary_loss_pred'], 
+                            torch.Tensor(y['color']))
         else:
             color_loss = 0
             adversary_loss = None
 
         reward_loss_grad = reward_loss+self.lmbda*color_loss
 
-        loss = {'reward_loss_grad': reward_loss_grad, 'adversary_loss_grad': adversary_loss,
-                 'reward': reward_loss_grad.detach().numpy()} # numpy for benefit of TEF
+        loss = {'reward_loss_grad': reward_loss_grad, 'adversary_loss_grad': adversary_loss}
+                 #'reward': reward_loss_grad.detach().numpy()} # numpy for benefit of TEF
         return loss
         # loss y['reward'], y_hat['reward']
         # loss y['color'], y_hat['color'] (negative of adversary loss)
