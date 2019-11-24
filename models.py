@@ -11,13 +11,15 @@ from itertools import chain
 # Should I have max pools like alexnet?
 class OurRewardPredictor(nn.Module):
     def __init__(self, color_adversary=False):
-        super(OurRewardPredictor, self).__init__()
+        super().__init__()
 
         self.task_spaces = None
         self.current_input_spaces = None
         self.current_output_spaces = None
-
         self.color_adversary = color_adversary
+
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
         self.features = nn.Sequential(
             nn.Conv2d(3, 64, 5, stride=2, padding=2), # 3x128x128 --> 64x64x64 =lower((128-5+2*2)/2)+1
             nn.ReLU(inplace=True),
@@ -41,6 +43,9 @@ class OurRewardPredictor(nn.Module):
             nn.Linear(256,1)
             )
 
+        self.features = self.features.to(self.device)
+        self.reward_classifier = self.reward_classifier.to(self.device)
+
         self.main_optimizer = optim.Adam(chain(self.features.parameters(), self.reward_classifier.parameters()), 
                                         lr=0.0002) #betas=(0.9, 0.999)
 
@@ -54,6 +59,7 @@ class OurRewardPredictor(nn.Module):
                     nn.ReLU(inplace=True),
                     nn.Linear(256,1) #Just 1 for now, binary colors
                     )
+            self.color_discriminator = self.color_discriminator.to(self.device)
             self.disc_optimizer = optim.Adam(self.color_discriminator.parameters(), lr=0.0002)
         else:
             self.color_discriminator = None
@@ -74,6 +80,7 @@ class OurRewardPredictor(nn.Module):
         # x 1 is nframes
         x = x['10_frames']
         x = torch.Tensor(x) #From numpy array to Tensor
+        x = x.to(self.device)
         x = x[:,:,0,:,:].squeeze(2)
         x = self.features(x)
         x = x.view(x.size(0),-1)
@@ -88,7 +95,7 @@ class OurRewardPredictor(nn.Module):
             c = None
 
         y_hat = { 'reward_loss_pred': y, 'color_loss_pred': c, 'adversary_loss_pred':cdetached,
-                  'reward': y.detach().numpy()  }
+                  'reward': y.detach().cpu().numpy()  }
 
         return y_hat #Question: should I make discriminator separate,
                                     # and update its weights before redoing calculation?
@@ -104,18 +111,19 @@ class OurRewardPredictor(nn.Module):
 
 
 class OurOptimizer:
-    def __init__(self, lmbda=1):
+    def __init__(self, model, lmbda=1):
+        self.device = model.device
         self.lmbda = lmbda
 
     def calculate_loss(self, y, y_hat): #y and y_hat should be dicts of all info
         reward_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['reward_loss_pred'], 
-                        torch.Tensor(y['reward']))
+                        torch.Tensor(y['reward']).to(self.device))
 
         if y_hat['color_loss_pred'] is not None and y_hat['adversary_loss_pred'] is not None:
             color_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['color_loss_pred'], 
                             1-torch.Tensor(y['color']))
             adversary_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['adversary_loss_pred'], 
-                            torch.Tensor(y['color']))
+                            torch.Tensor(y['color']).to(self.device))
         else:
             color_loss = 0
             adversary_loss = None

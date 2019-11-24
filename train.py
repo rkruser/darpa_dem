@@ -24,8 +24,8 @@ from models import OurRewardPredictor, OurOptimizer
 
 def train_model(path_to_syllabus):
     # Instantiate Model, optimizer, training parameters, etc.
-    model = OurRewardPredictor(color_adversary=True)
-    optim = OurOptimizer()
+    model = OurRewardPredictor(color_adversary=False)
+    optim = OurOptimizer(model)
 
     cl = learnkit.Classroom()
     with cl.load(path_to_syllabus) as syllabus:
@@ -80,6 +80,8 @@ def train_model(path_to_syllabus):
                 # perform inference here
                 #   y_hat should be a python dictionary with one numpy array of estimates for each key in the
                 #   output_space, e.g. {'game': np.array of shape (batch_size,)}
+                if '10_frames' not in x:
+                    break
                 y_hat = model.forward(x)
 
                 # get_labels() collects y_hat for performance analysis purposes before the labels are provided. This
