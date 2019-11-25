@@ -13,14 +13,15 @@ from dataloader import L2M_Pytorch_Dataset, L2DATA
 
 
 def train_model(gen_syllabus, nepochs):
-    model = OurRewardPredictor(color_adversary=False)
+    exp_name = os.path.basename(os.path.splitext(gen_syllabus)[0])
+    model = OurRewardPredictor(loadmodel=False, experiment_name=exp_name, color_adversary=False)
     optim = OurOptimizer(model)
     loader = DataLoader(L2M_Pytorch_Dataset(gen_syllabus), batch_size=32, shuffle=True, num_workers=4)
 
     for epoch in range(nepochs):
         print(epoch)
         for i, pt in enumerate(loader):
-            print("   ", i)
+            #print("   ", i)
             x = pt[0]
             y = {'reward': pt[1], 'color': pt[2]}
 
@@ -28,7 +29,7 @@ def train_model(gen_syllabus, nepochs):
             loss = optim.calculate_loss(y,y_hat)
             model.update(loss)
 
-
+    model.save_model() 
 
 
 

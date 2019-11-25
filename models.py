@@ -18,6 +18,7 @@ class OurRewardPredictor(nn.Module):
         super().__init__()
 
         if loadmodel:
+            print("Loading model")
             loadfile = os.path.join(loadfolder, 'models', experiment_name, model_name+'.pkl')
             f = open(loadfile, 'rb')
             self.__dict__.update(pickle.load(f))
@@ -124,7 +125,7 @@ class OurRewardPredictor(nn.Module):
     def save_model(self, folder=L2DATA):
         fullfolder = os.path.join(folder, 'models', self.experiment_name)
         if not os.path.exists(fullfolder):
-            os.path.makedirs(fullfolder)
+            os.makedirs(fullfolder)
         fname = os.path.join(fullfolder, self.model_name+'.pkl')
         f = open(fname, 'wb')
         pickle.dump(self.__dict__, f, 2) #pickle with protocol 2 for efficiency
