@@ -15,17 +15,21 @@ model training occurs here.
 """
 
 import numpy as np
+import torch
+from torch.utils.data import DataLoader
 
 import learnkit
 from learnkit.utils import module_relative_file
 
 from models import OurRewardPredictor, OurOptimizer
+from dataloader import L2M_Pytorch_Dataset
 
 
 def train_model(path_to_syllabus):
     # Instantiate Model, optimizer, training parameters, etc.
     model = OurRewardPredictor(color_adversary=False)
     optim = OurOptimizer(model)
+    dset = DataLoader(L2M_Pytorch_Dataset('gen_syllabus.json'), batch_size=32, shuffle=True, num_workers=4)
 
     cl = learnkit.Classroom()
     with cl.load(path_to_syllabus) as syllabus:
