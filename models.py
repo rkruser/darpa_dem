@@ -6,19 +6,22 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import pickle
+from dataloader import L2DATA
 
 from itertools import chain
 import os
 
 # Should I have max pools like alexnet?
 class OurRewardPredictor(nn.Module):
-    def __init__(self, loadfile=None, experiment_name='gen_syllabus', 
+    def __init__(self, loadmodel=False, loadfolder=L2DATA, experiment_name='gen_syllabus', 
                 model_name="PongRewardPredictor", color_adversary=False):
         super().__init__()
 
-        if loadfile is not None:
+        if loadmodel:
+            loadfile = os.path.join(loadfolder, 'models', experiment_name, model_name+'.pkl')
             f = open(loadfile, 'rb')
             self.__dict__.update(pickle.load(f))
+            f.close()
         else:
             self.experiment_name = experiment_name
             self.model_name = model_name
@@ -118,8 +121,11 @@ class OurRewardPredictor(nn.Module):
            adversaryLoss.backward()
            self.disc_optimizer.step()
 
-    def save_model(self, folder):
-        fname = os.path.join(folder, self.name+'.pth')
+    def save_model(self, folder=L2DATA):
+        fullfolder = os.path.join(folder, 'models', self.experiment_name)
+        if not os.path.exists(fullfolder):
+            os.path.makedirs(fullfolder)
+        fname = os.path.join(fullfolder, self.model_name+'.pkl')
         f = open(fname, 'wb')
         pickle.dump(self.__dict__, f, 2) #pickle with protocol 2 for efficiency
         f.close()
