@@ -6,28 +6,81 @@ from torch.utils.data import DataLoader
 import learnkit
 from learnkit.utils import module_relative_file
 
-from models import OurRewardPredictor, OurOptimizer
+from models import OurRewardPredictor, OurOptimizer, Meters
 from dataloader import L2M_Pytorch_Dataset, L2DATA
+
+from torch.utils.tensorboard import SummaryWriter
 
 
 
 
 def train_model(gen_syllabus, nepochs):
+    writer = SummaryWriter()
     exp_name = os.path.basename(os.path.splitext(gen_syllabus)[0])
     model = OurRewardPredictor(loadmodel=False, experiment_name=exp_name, color_adversary=False)
     optim = OurOptimizer(model)
-    loader = DataLoader(L2M_Pytorch_Dataset(gen_syllabus), batch_size=32, shuffle=True, num_workers=4)
 
+    totalset = L2M_Pytorch_Dataset(gen_syllabus)
+    train_length = int(0.8*len(totalset))
+    test_length = len(totalset)-train_length
+    trainset, testset = torch.utils.data.random_split(totalset, (train_length, test_length))
+    trainloader = DataLoader(trainset, batch_size=64, shuffle=True, num_workers=4)
+    testloader = DataLoader(testset, batch_size=64, shuffle=False, num_workers=4)
+
+    meters = Meters('trainacc', 'testacc', 'trainloss', 'testloss', 'trainacc_adv', 
+                    'trainloss_adv', 'testacc_adv', 'testloss_adv')
+    writer = SummaryWriter()
     for epoch in range(nepochs):
         print(epoch)
-        for i, pt in enumerate(loader):
+        meters.reset_all()
+        # Train
+        print("Train")
+        for i, pt in enumerate(trainloader):
             #print("   ", i)
             x = pt[0]
             y = {'reward': pt[1], 'color': pt[2]}
+            batch_size = len(x)
 
             y_hat = model.forward(x)
             loss = optim.calculate_loss(y,y_hat)
             model.update(loss)
+
+            # Logging
+            meters.update('trainloss', loss['reward_loss'].item(), batch_size)
+            meters.update('trainacc', loss['reward_acc'].item(), batch_size)
+            if loss['adversary_loss'] is not None:
+                meters.update('trainloss_adv', loss['adversary_loss'].item(), batch_size)
+                meters.update('trainacc_adv', loss['adversary_acc'].item(), batch_size)
+
+        # Test
+        print("Test")
+        for i, pt in enumerate(testloader):
+            x = pt[0]
+            y = {'reward': pt[1], 'color': pt[2]}
+            batch_size = len(x)
+
+            y_hat = model.forward(x)
+            loss = optim.calculate_loss(y,y_hat)
+
+            # Logging
+            meters.update('testloss', loss['reward_loss'].item(), batch_size)
+            meters.update('testacc', loss['reward_acc'].item(), batch_size)
+            if loss['adversary_loss'] is not None:
+                meters.update('testloss_adv', loss['adversary_loss'].item(), batch_size)
+                meters.update('testacc_adv', loss['adversary_acc'].item(), batch_size)
+
+        # Tensorboard logging
+        writer.add_scalar('loss/main/train', meters.average('trainloss'), epoch)
+        writer.add_scalar('accuracy/main/train', meters.average('trainacc'), epoch)
+        writer.add_scalar('loss/main/test', meters.average('testloss'), epoch)
+        writer.add_scalar('accuracy/main/test', meters.average('testacc'), epoch)
+
+        writer.add_scalar('loss/adv/train', meters.average('trainloss_adv'), epoch)
+        writer.add_scalar('accuracy/adv/train', meters.average('trainacc_adv'), epoch)
+        writer.add_scalar('loss/adv/test', meters.average('testloss_adv'), epoch)
+        writer.add_scalar('accuracy/adv/test', meters.average('testacc_adv'), epoch)
+
+            
 
     model.save_model() 
 

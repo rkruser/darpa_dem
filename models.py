@@ -107,18 +107,19 @@ class OurRewardPredictor(nn.Module):
             cdetached = None
             c = None
 
-        y_hat = { 'reward_loss_pred': y, 'color_loss_pred': c, 'adversary_loss_pred':cdetached,
-                  'reward': y.detach().cpu().numpy()  }
+        y_hat = { 'reward_pred': y, 'color_pred': c, 'adversary_pred':cdetached}
+#                  'reward': y.detach().cpu().numpy()  }
 
         return y_hat #Question: should I make discriminator separate,
                                     # and update its weights before redoing calculation?
 
     def update(self, loss):
-       mainLoss = loss['reward_loss_grad'] #includes adversarial color loss
+       self.zero_grad() #Does this get both models?
+       mainLoss = loss['reward_loss'] #includes adversarial color loss
        mainLoss.backward()
        self.main_optimizer.step()
        if self.color_adversary:
-           adversaryLoss = loss['adversary_loss_grad']
+           adversaryLoss = loss['adversary_loss']
            adversaryLoss.backward()
            self.disc_optimizer.step()
 
@@ -139,28 +140,58 @@ class OurOptimizer:
         self.device = model.device
         self.lmbda = lmbda
 
-    def calculate_loss(self, y, y_hat): #y and y_hat should be dicts of all info
-        reward_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['reward_loss_pred'], 
-                        torch.Tensor(y['reward']).to(self.device))
-
-        if y_hat['color_loss_pred'] is not None and y_hat['adversary_loss_pred'] is not None:
-            color_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['color_loss_pred'], 
-                            1-torch.Tensor(y['color']))
-            adversary_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['adversary_loss_pred'], 
-                            torch.Tensor(y['color']).to(self.device))
-        else:
-            color_loss = 0
-            adversary_loss = None
-
-        reward_loss_grad = reward_loss+self.lmbda*color_loss
-
-        loss = {'reward_loss_grad': reward_loss_grad, 'adversary_loss_grad': adversary_loss}
-                 #'reward': reward_loss_grad.detach().numpy()} # numpy for benefit of TEF
-        return loss
+#    def calculate_loss(self, y, y_hat): #y and y_hat should be dicts of all info
+#        reward_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['reward_loss_pred'], 
+#                        torch.Tensor(y['reward']).to(self.device))
+#
+#        if y_hat['color_loss_pred'] is not None and y_hat['adversary_loss_pred'] is not None:
+#            color_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['color_loss_pred'], 
+#                            1-torch.Tensor(y['color']))
+#            adversary_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['adversary_loss_pred'], 
+#                            torch.Tensor(y['color']).to(self.device))
+#        else:
+#            color_loss = 0
+#            adversary_loss = None
+#
+#        reward_loss = reward_loss+self.lmbda*color_loss
+#
+#        loss = {'reward_loss': reward_loss, 'adversary_loss': adversary_loss}
+#                 #'reward': reward_loss_grad.detach().numpy()} # numpy for benefit of TEF
+#        return loss
         # loss y['reward'], y_hat['reward']
         # loss y['color'], y_hat['color'] (negative of adversary loss)
         # loss y['adversary'], y_hat['adversary']
         # add first two losses together with some constant coefficient
+
+    def calculate_loss(self, y, y_hat):
+        reward_predictions = y_hat['reward_pred']
+        color_predictions = y_hat['color_pred']
+        adversary_predictions = y_hat['adversary_pred']
+        reward_actual = torch.Tensor(y['reward']).to(self.device)
+        color_actual = torch.Tensor(y['color']).to(self.device)
+
+        reward_loss = nn.functional.binary_cross_entropy_with_logits(reward_predictions, reward_actual)
+        reward_acc = ((reward_predictions > 0).int() == reward_actual.int()).sum().float() / len(reward_actual)
+        if color_predictions is not None:
+            color_loss = nn.functional.binary_cross_entropy_with_logits(color_predictions, 1-color_actual)
+        else:
+            color_loss = 0
+        if adversary_predictions is not None:
+            adversary_loss = nn.functional.binary_cross_entropy_with_logits(adversary_predictions, color_actual)
+            adversary_acc = ((adversary_predictions > 0).int() == color_actual.int()).sum().float() / len(color_actual)
+        else:
+            adversary_loss = None
+            adversary_acc = None
+
+        reward_loss = reward_loss+self.lmbda*color_loss
+
+        losses = { 'reward_loss': reward_loss,
+                   'adversary_loss': adversary_loss,
+                   'reward_acc': reward_acc,
+                   'adversary_acc': adversary_acc }
+
+        return losses
+
 
 
         
@@ -169,4 +200,44 @@ class OurOptimizer:
 # Extract loss plots
 # Do preliminary runs
 
+class AverageMeter:
+    def __init__(self):
+        self.count = 0
+        self.value = 0.0
 
+    def update(self, value, num=1):
+        self.count += num
+        self.value += num*value #Not sure if that works for all losses, but works for accuracy
+
+    def reset(self):
+        self.count = 0
+        self.value = 0.0
+
+    def average(self):
+        if self.count > 0:
+            return self.value / self.count
+        else:
+            return 0
+
+
+class Meters:
+    def __init__(self, *args):
+        self.meters = {}
+        for name in args:
+            self.add_meter(name)
+
+    def add_meter(self, name):
+        self.meters[name] = AverageMeter()
+
+    def reset_meter(self, name):
+        self.meters[name].reset()
+
+    def average(self, name):
+        return self.meters[name].average()
+
+    def update(self, name, value, num=1):
+        self.meters[name].update(value, num)
+
+    def reset_all(self):
+        for k in self.meters:
+            self.reset_meter(k)
