@@ -128,6 +128,15 @@ class OurRewardPredictor(nn.Module):
         if not os.path.exists(fullfolder):
             os.makedirs(fullfolder)
         fname = os.path.join(fullfolder, self.model_name+'.pkl')
+        while os.path.exists(fname):
+            print("Warning: model file already exists, press enter to overwrite or type a new model name")
+            newname = input()
+            if len(newname) > 0:
+                self.model_name = newname
+                fname = os.path.join(fullfolder, self.model_name+'.pkl')
+            else:
+                break
+            
         f = open(fname, 'wb')
         pickle.dump(self.__dict__, f, 2) #pickle with protocol 2 for efficiency
         f.close()

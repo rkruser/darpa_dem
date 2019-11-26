@@ -14,13 +14,14 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 
-def train_model(gen_syllabus, nepochs):
+def train_model(syllabus, nepochs, model_name, use_adversary):
     writer = SummaryWriter()
-    exp_name = os.path.basename(os.path.splitext(gen_syllabus)[0])
-    model = OurRewardPredictor(loadmodel=False, experiment_name=exp_name, color_adversary=False)
+    exp_name = os.path.basename(os.path.splitext(syllabus)[0])
+    model = OurRewardPredictor(loadmodel=False, experiment_name=exp_name, model_name=model_name,
+                                color_adversary=use_adversary)
     optim = OurOptimizer(model)
 
-    totalset = L2M_Pytorch_Dataset(gen_syllabus)
+    totalset = L2M_Pytorch_Dataset(syllabus)
     train_length = int(0.8*len(totalset))
     test_length = len(totalset)-train_length
     trainset, testset = torch.utils.data.random_split(totalset, (train_length, test_length))
@@ -34,7 +35,7 @@ def train_model(gen_syllabus, nepochs):
         print(epoch)
         meters.reset_all()
         # Train
-        print("Train")
+        print("  Train")
         for i, pt in enumerate(trainloader):
             #print("   ", i)
             x = pt[0]
@@ -53,7 +54,7 @@ def train_model(gen_syllabus, nepochs):
                 meters.update('trainacc_adv', loss['adversary_acc'].item(), batch_size)
 
         # Test
-        print("Test")
+        print("  Test")
         for i, pt in enumerate(testloader):
             x = pt[0]
             y = {'reward': pt[1], 'color': pt[2]}
@@ -85,19 +86,16 @@ def train_model(gen_syllabus, nepochs):
     model.save_model() 
 
 
-
-
-
-
-
-
 if __name__ == '__main__':
    import argparse
    parser = argparse.ArgumentParser()
-   parser.add_argument('--gen_syllabus', default='gen_syllabus.json')
+   parser.add_argument('--syllabus', default='gen_syllabus.json')
    parser.add_argument('--train_syllabus', default='train_predict_total_reward_syllabus.json')
    parser.add_argument('--random_seed', type=int, default=1234)
    parser.add_argument('--nepochs', type=int, default=10)
+   parser.add_argument('--model_name', default='PongRewardPredictor')
+   parser.add_argument('--use_adversary', action='store_true')
    args = parser.parse_args()
    torch.manual_seed(args.random_seed)
-   train_model(module_relative_file(__file__, args.gen_syllabus), args.nepochs)
+   train_model(module_relative_file(__file__, args.syllabus), args.nepochs, 
+                args.model_name, args.use_adversary)
