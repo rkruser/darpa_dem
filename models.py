@@ -179,6 +179,7 @@ class OurOptimizer:
         adversary_predictions = y_hat['adversary_pred']
         reward_actual = torch.Tensor(y['reward']).to(self.device)
         color_actual = torch.Tensor(y['bg_color']).to(self.device)
+        size_actual = torch.Tensor(y['bot/paddle/width']).to(self.device)
 
         reward_loss = nn.functional.binary_cross_entropy_with_logits(reward_predictions, reward_actual)
         reward_acc = ((reward_predictions > 0).int() == reward_actual.int()).sum().float() / len(reward_actual)
