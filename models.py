@@ -145,9 +145,10 @@ class OurRewardPredictor(nn.Module):
 
 
 class OurOptimizer:
-    def __init__(self, model, lmbda=1):
+    def __init__(self, model, dataset, lmbda=1):
         self.device = model.device
         self.lmbda = lmbda
+        self.stats = dataset.statistics()
 
 #    def calculate_loss(self, y, y_hat): #y and y_hat should be dicts of all info
 #        reward_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['reward_loss_pred'], 
@@ -177,7 +178,7 @@ class OurOptimizer:
         color_predictions = y_hat['color_pred']
         adversary_predictions = y_hat['adversary_pred']
         reward_actual = torch.Tensor(y['reward']).to(self.device)
-        color_actual = torch.Tensor(y['color']).to(self.device)
+        color_actual = torch.Tensor(y['bg_color']).to(self.device)
 
         reward_loss = nn.functional.binary_cross_entropy_with_logits(reward_predictions, reward_actual)
         reward_acc = ((reward_predictions > 0).int() == reward_actual.int()).sum().float() / len(reward_actual)

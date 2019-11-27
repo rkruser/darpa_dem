@@ -38,8 +38,9 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
         print("  Train")
         for i, pt in enumerate(trainloader):
             #print("   ", i)
-            x = pt[0]
-            y = {'reward': pt[1], 'color': pt[2]}
+#            x = pt[0]
+#            y = {'reward': pt[1], 'color': pt[2]}
+            x, y = pt
             batch_size = len(x)
 
             y_hat = model.forward(x)
@@ -56,8 +57,9 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
         # Test
         print("  Test")
         for i, pt in enumerate(testloader):
-            x = pt[0]
-            y = {'reward': pt[1], 'color': pt[2]}
+#            x = pt[0]
+#            y = {'reward': pt[1], 'color': pt[2]}
+            x, y = pt
             batch_size = len(x)
 
             y_hat = model.forward(x)

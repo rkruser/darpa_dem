@@ -104,8 +104,10 @@ class L2M_Pytorch_Dataset(Dataset):
 
 
     def __getitem__(self, index):
-        return self.states[index], self.labels['reward'][index], self.labels['bg_color'][index]
-                    
+#        return self.states[index], self.labels['reward'][index], self.labels['bg_color'][index], self.labels['bot/paddle/width'][index]
+        return self.states[index], { 'reward': self.labels['reward'][index], 
+                                    'bg_color': self.labels['bg_color'][index], 
+                                    'bot/paddle/width': self.labels['bot/paddle/width'][index] }
 
     def statistics(self):
         red_large = ((self.labels['bg_color'].int() == 1) & (self.labels['bot/paddle/width'].int() == 1))
