@@ -147,10 +147,10 @@ class OurRewardPredictor(nn.Module):
 
 
 class OurOptimizer:
-    def __init__(self, model, dataset, lmbda=1):
+    def __init__(self, model, lmbda=1):
         self.device = model.device
         self.lmbda = lmbda
-        self.stats = dataset.statistics()
+#        self.stats = dataset.statistics()
 
 #    def calculate_loss(self, y, y_hat): #y and y_hat should be dicts of all info
 #        reward_loss = nn.functional.binary_cross_entropy_with_logits(y_hat['reward_loss_pred'], 
@@ -205,9 +205,9 @@ class OurOptimizer:
                    'adversary_loss': adversary_loss,
                    'reward_acc': reward_acc,
                    'adversary_acc': adversary_acc,
-                   'sumgrid': sumgrid,
-                   'totalgrid': totalgrid,
-                   'proportiongrid': proportiongrid
+                   'sumgrid': sumgrid.to('cpu'),
+                   'totalgrid': totalgrid.to('cpu'),
+                   'proportiongrid': proportiongrid.to('cpu')
                    }
 
         return losses

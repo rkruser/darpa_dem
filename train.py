@@ -7,7 +7,7 @@ import learnkit
 from learnkit.utils import module_relative_file
 
 from models import OurRewardPredictor, OurOptimizer, Meters
-from dataloader import L2M_Pytorch_Dataset, L2DATA
+from dataloader import L2DATA, Construct_L2M_Dataset
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -21,10 +21,15 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
                                 color_adversary=use_adversary)
     optim = OurOptimizer(model)
 
-    totalset = L2M_Pytorch_Dataset(syllabus)
-    train_length = int(0.8*len(totalset))
-    test_length = len(totalset)-train_length
-    trainset, testset = torch.utils.data.random_split(totalset, (train_length, test_length))
+#    totalset = L2M_Pytorch_Dataset(syllabus)
+#    train_length = int(0.8*len(totalset))
+#    test_length = len(totalset)-train_length
+#    trainset, testset = torch.utils.data.random_split(totalset, (train_length, test_length))
+    trainset, testset = Construct_L2M_Dataset(syllabus)
+    print("Train stats:")
+    trainset.print_statistics()
+    print("Test stats:")
+    testset.print_statistics()
     trainloader = DataLoader(trainset, batch_size=64, shuffle=True, num_workers=4)
     testloader = DataLoader(testset, batch_size=64, shuffle=False, num_workers=4)
 

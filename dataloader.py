@@ -61,8 +61,8 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
         for param_hash in iter(game):
             param_set = game[param_hash]
             param_values = json.loads(param_set.attrs['parameter_values'])
-            current_color = torch.Tensor(1).fill_(self.color_map(param_values['bg_color']))
-            current_size = torch.Tensor(1).fill_(self.size_map(param_values['bot/paddle/width']))
+            current_color = torch.Tensor(1).fill_(color_map(param_values['bg_color']))
+            current_size = torch.Tensor(1).fill_(size_map(param_values['bot/paddle/width']))
             
             for episode_id in iter(param_set):
                 episode = param_set[episode_id]
@@ -87,13 +87,13 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                 all_actions.append(actions)
                 all_rewards.append(rewards)
                 counts.append(len(states))
-                all_labels['reward'].append(torch.Tensor(len(states)).fill_(self.reward_map(rewards.sum().item())))
+                all_labels['reward'].append(torch.Tensor(len(states)).fill_(reward_map(rewards.sum().item())))
                 all_labels['bg_color'].append(current_color.repeat(len(states)))
                 all_labels['bot/paddle/width'].append(current_size.repeat(len(states)))
 
     datafile.close()
 
-    size = np.sum(counts)
+    size = int(np.sum(counts)) #need int here for pytorch sake; can't handle np.int64
     states = torch.cat(all_states)
     rewards = torch.cat(all_rewards)
     actions = torch.cat(all_actions)
@@ -133,7 +133,7 @@ def stat_grid(values, xproperty, yproperty):
 
     sumgrid = torch.Tensor([[val_nx_ny.sum(), val_nx_yy.sum()], [val_yx_ny.sum(), val_yx_yy.sum()]])
     totalgrid = torch.Tensor([[len(val_nx_ny), len(val_nx_yy)], [len(val_yx_ny), len(val_yx_yy)]])
-    proportiongrid = countgrid/totalgrid
+    proportiongrid = sumgrid/totalgrid
     return sumgrid, totalgrid, proportiongrid
 
 def print_grid(grid, xlabels, ylabels):
@@ -162,7 +162,7 @@ class L2M_Pytorch_Dataset(Dataset):
                                     'bot/paddle/width': self.labels['bot/paddle/width'][index] }
 
     def statistics(self):
-        return statgrid(self.labels['reward'], self.labels['bot/paddle/width'], self.labels['bg_color'])
+        return stat_grid(self.labels['reward'], self.labels['bot/paddle/width'], self.labels['bg_color'])
 
     def print_statistics(self):
         counts, totals, proportions = self.statistics()
