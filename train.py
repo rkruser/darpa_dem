@@ -28,8 +28,13 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
     trainloader = DataLoader(trainset, batch_size=64, shuffle=True, num_workers=4)
     testloader = DataLoader(testset, batch_size=64, shuffle=False, num_workers=4)
 
-    meters = Meters('trainacc', 'testacc', 'trainloss', 'testloss', 'trainacc_adv', 
-                    'trainloss_adv', 'testacc_adv', 'testloss_adv')
+    meters = Meters('trainacc', 'testacc', 'trainloss', 'testloss', 'traingrid', 'testgrid',
+        'trainacc_adv', 'trainloss_adv', 'testacc_adv', 'testloss_adv')#, 'traingrid_adv', 'testgrid_adv')
+    meters.initialize_meter('traingrid', torch.zeros(2,2), torch.zeros(2,2))
+    meters.initialize_meter('testgrid', torch.zeros(2,2), torch.zeros(2,2))
+#    meters.initialize_meter('traingrid_adv') = np.zeros((2,2))
+#    meters.initialize_meter('testgrid_adv') = np.zeros((2,2))
+
     writer = SummaryWriter()
     for epoch in range(nepochs):
         print(epoch)
@@ -50,6 +55,7 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
             # Logging
             meters.update('trainloss', loss['reward_loss'].item(), batch_size)
             meters.update('trainacc', loss['reward_acc'].item(), batch_size)
+            meters.update('traingrid', loss['proportiongrid'], loss['totalgrid'])
             if loss['adversary_loss'] is not None:
                 meters.update('trainloss_adv', loss['adversary_loss'].item(), batch_size)
                 meters.update('trainacc_adv', loss['adversary_acc'].item(), batch_size)
@@ -68,6 +74,7 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
             # Logging
             meters.update('testloss', loss['reward_loss'].item(), batch_size)
             meters.update('testacc', loss['reward_acc'].item(), batch_size)
+            meters.update('testgrid', loss['proportiongrid'], loss['totalgrid'])
             if loss['adversary_loss'] is not None:
                 meters.update('testloss_adv', loss['adversary_loss'].item(), batch_size)
                 meters.update('testacc_adv', loss['adversary_acc'].item(), batch_size)
@@ -77,6 +84,13 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
         writer.add_scalar('accuracy/main/train', meters.average('trainacc'), epoch)
         writer.add_scalar('loss/main/test', meters.average('testloss'), epoch)
         writer.add_scalar('accuracy/main/test', meters.average('testacc'), epoch)
+
+        train_grid_average = meters.average('traingrid')
+        test_grid_average = meters.average('testgrid')
+        for i in range(len(train_grid_average)):
+            for j in range(len(train_grid_average[i])):
+                writer.add_scalar('train/grid_{0}_{1}'.format(i,j), train_grid_average[i,j].item())
+                writer.add_scalar('test/grid_{0}_{1}'.format(i,j), test_grid_average[i,j].item())
 
         writer.add_scalar('loss/adv/train', meters.average('trainloss_adv'), epoch)
         writer.add_scalar('accuracy/adv/train', meters.average('trainacc_adv'), epoch)

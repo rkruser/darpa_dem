@@ -11,6 +11,8 @@ from dataloader import L2DATA
 from itertools import chain
 import os
 
+from dataloader import stat_grid
+
 # Should I have max pools like alexnet?
 class OurRewardPredictor(nn.Module):
     def __init__(self, loadmodel=False, loadfolder=L2DATA, experiment_name='gen_syllabus', 
@@ -183,6 +185,9 @@ class OurOptimizer:
 
         reward_loss = nn.functional.binary_cross_entropy_with_logits(reward_predictions, reward_actual)
         reward_acc = ((reward_predictions > 0).int() == reward_actual.int()).sum().float() / len(reward_actual)
+
+        sumgrid, totalgrid, proportiongrid = stat_grid(reward_predictions, size_actual, color_actual)
+
         if color_predictions is not None:
             color_loss = nn.functional.binary_cross_entropy_with_logits(color_predictions, 1-color_actual)
         else:
@@ -199,7 +204,11 @@ class OurOptimizer:
         losses = { 'reward_loss': reward_loss,
                    'adversary_loss': adversary_loss,
                    'reward_acc': reward_acc,
-                   'adversary_acc': adversary_acc }
+                   'adversary_acc': adversary_acc,
+                   'sumgrid': sumgrid,
+                   'totalgrid': totalgrid,
+                   'proportiongrid': proportiongrid
+                   }
 
         return losses
 
@@ -213,28 +222,32 @@ class OurOptimizer:
 
 class AverageMeter:
     def __init__(self):
-        self.count = 0
+        self.count_init_val = 0
+        self.count = self.count_init_val
         self.init_val = 0.0
         self.value = self.init_val
 
     # Init_val can be any object for which scalar multiplication, scalar division, and += are defined
-    def initialize(self, init_val):
+    def initialize(self, init_val, count_init_val=None):
         self.init_val = init_val
-        self.value = self.init_val
+        if count_init_val is not None:
+            self.count_init_val = count_init_val
+        self.reset()
 
     def update(self, value, num=1):
         self.count += num
         self.value += num*value #Not sure if that works for all losses, but works for accuracy
 
     def reset(self):
-        self.count = 0
+        self.count = self.count_init_val
         self.value = self.init_val
 
     def average(self):
-        if self.count > 0:
-            return self.value / self.count
-        else:
-            return 0
+#        if self.count > 0:
+#            return self.value / self.count
+#        else:
+#            return 0
+        return self.value / self.count
 
 
 class Meters:
@@ -246,8 +259,8 @@ class Meters:
     def add_meter(self, name):
         self.meters[name] = AverageMeter()
 
-    def initialize_meter(self, name, init_val):
-        self.meters[name].initialize(init_val)
+    def initialize_meter(self, name, init_val, count_init_val=None):
+        self.meters[name].initialize(init_val, count_init_val)
 
     def reset_meter(self, name):
         self.meters[name].reset()

@@ -11,6 +11,9 @@ from torchvision import transforms, utils
 
 L2DATA = os.getenv('L2DATA')
 
+
+# Red = 1, blue = 0
+
 # Discretize color
 def standard_color_map(rgb_triple):
     if rgb_triple[0] > 128:
@@ -25,6 +28,7 @@ def standard_reward_map(reward_value):
     else:
         return 1
 
+# Large = 1, small = 0
 def standard_size_map(size):
     if size > 0.2:
         return 1
@@ -127,10 +131,10 @@ def stat_grid(values, xproperty, yproperty):
     val_yx_ny = values[yx_ny]
     val_yx_yy = values[yx_yy]
 
-    countgrid = torch.Tensor([[val_nx_ny.sum(), val_nx_yy.sum()], [val_yx_ny.sum(), val_yx_yy.sum()]])
+    sumgrid = torch.Tensor([[val_nx_ny.sum(), val_nx_yy.sum()], [val_yx_ny.sum(), val_yx_yy.sum()]])
     totalgrid = torch.Tensor([[len(val_nx_ny), len(val_nx_yy)], [len(val_yx_ny), len(val_yx_yy)]])
     proportiongrid = countgrid/totalgrid
-    return countgrid, totalgrid, proportiongrid
+    return sumgrid, totalgrid, proportiongrid
 
 def print_grid(grid, xlabels, ylabels):
     print('    ', end='')
