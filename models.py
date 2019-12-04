@@ -214,7 +214,13 @@ class OurOptimizer:
 class AverageMeter:
     def __init__(self):
         self.count = 0
-        self.value = 0.0
+        self.init_val = 0.0
+        self.value = self.init_val
+
+    # Init_val can be any object for which scalar multiplication, scalar division, and += are defined
+    def initialize(self, init_val):
+        self.init_val = init_val
+        self.value = self.init_val
 
     def update(self, value, num=1):
         self.count += num
@@ -222,7 +228,7 @@ class AverageMeter:
 
     def reset(self):
         self.count = 0
-        self.value = 0.0
+        self.value = self.init_val
 
     def average(self):
         if self.count > 0:
@@ -239,6 +245,9 @@ class Meters:
 
     def add_meter(self, name):
         self.meters[name] = AverageMeter()
+
+    def initialize_meter(self, name, init_val):
+        self.meters[name].initialize(init_val)
 
     def reset_meter(self, name):
         self.meters[name].reset()
