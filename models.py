@@ -116,11 +116,13 @@ class OurRewardPredictor(nn.Module):
                                     # and update its weights before redoing calculation?
 
     def update(self, loss):
-       self.zero_grad() #Does this get both models?
+       self.features.zero_grad()
+       self.reward_classifier.zero_grad()
        mainLoss = loss['reward_loss'] #includes adversarial color loss
        mainLoss.backward()
        self.main_optimizer.step()
        if self.color_adversary:
+           self.color_discriminator.zero_grad()
            adversaryLoss = loss['adversary_loss']
            adversaryLoss.backward()
            self.disc_optimizer.step()
