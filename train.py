@@ -6,26 +6,29 @@ from torch.utils.data import DataLoader
 import learnkit
 from learnkit.utils import module_relative_file
 
-from models import OurRewardPredictor, OurOptimizer, Meters
+from models import OurRewardPredictor, OurSimpleRewardPredictor, OurOptimizer, Meters
 from dataloader import L2DATA, Construct_L2M_Dataset
 
 from torch.utils.tensorboard import SummaryWriter
 
+import time
 
 
 
-def train_model(train_syllabus, test_syllabus, nepochs, model_name, use_adversary, gpu=0):
+
+def train_model(mclass, train_syllabus, test_syllabus, nepochs, model_name, use_adversary, gpu=0,
+                resize=None, noise=None, loadname=None, loadmodel=False):
     exp_name = os.path.basename(os.path.splitext(train_syllabus)[0])
-    model = OurRewardPredictor(loadmodel=False, experiment_name=exp_name, model_name=model_name,
-                                color_adversary=use_adversary, gpuid=gpu)
+    model = mclass(loadmodel=loadmodel, experiment_name=exp_name, model_name=model_name,
+                                color_adversary=use_adversary, gpuid=gpu, loadname=loadname)
     optim = OurOptimizer(model)
 
 #    totalset = L2M_Pytorch_Dataset(syllabus)
 #    train_length = int(0.8*len(totalset))
 #    test_length = len(totalset)-train_length
 #    trainset, testset = torch.utils.data.random_split(totalset, (train_length, test_length))
-    trainset, _ = Construct_L2M_Dataset(train_syllabus, train_proportion=1)
-    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1)
+    trainset, _ = Construct_L2M_Dataset(train_syllabus, train_proportion=1, resize=resize, noise=noise)
+    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1, resize=resize, noise=None)
 
     print("Train stats:")
     trainset.print_statistics()
@@ -41,12 +44,14 @@ def train_model(train_syllabus, test_syllabus, nepochs, model_name, use_adversar
 #    meters.initialize_meter('traingrid_adv') = np.zeros((2,2))
 #    meters.initialize_meter('testgrid_adv') = np.zeros((2,2))
 
-    writer = SummaryWriter()
+    timestamp = time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime())
+    writer = SummaryWriter('./runs/{0}_{1}'.format(model_name,timestamp))
     for epoch in range(nepochs):
         print(epoch)
         meters.reset_all()
         # Train
         print("  Train")
+        model.train(True)
         for i, pt in enumerate(trainloader):
             #print("   ", i)
 #            x = pt[0]
@@ -68,6 +73,7 @@ def train_model(train_syllabus, test_syllabus, nepochs, model_name, use_adversar
 
         # Test
         print("  Test")
+        model.train(False)
         for i, pt in enumerate(testloader):
 #            x = pt[0]
 #            y = {'reward': pt[1], 'color': pt[2]}
@@ -110,21 +116,42 @@ def train_model(train_syllabus, test_syllabus, nepochs, model_name, use_adversar
 
 
 if __name__ == '__main__':
-   import argparse
-   parser = argparse.ArgumentParser()
-   parser.add_argument('--train_syllabus', default='experiment1.json')
-   parser.add_argument('--test_syllabus', default='experiment1_test.json')
-#   parser.add_argument('--train_syllabus', default='train_predict_total_reward_syllabus.json')
-   parser.add_argument('--random_seed', type=int, default=1234)
-   parser.add_argument('--nepochs', type=int, default=10)
-   parser.add_argument('--model_name', default='PongRewardPredictor')
-   parser.add_argument('--use_adversary', action='store_true')
-   parser.add_argument('--gpuid', type=int, default=0)
-   args = parser.parse_args()
-   torch.manual_seed(args.random_seed)
-   train_model(module_relative_file(__file__, args.train_syllabus), 
-               module_relative_file(__file__, args.test_syllabus),
-               args.nepochs, 
-               args.model_name, 
-               args.use_adversary,
-               args.gpuid)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--train_syllabus', default='experiment1.json')
+    parser.add_argument('--test_syllabus', default='experiment1_test.json')
+#    parser.add_argument('--train_syllabus', default='train_predict_total_reward_syllabus.json')
+    parser.add_argument('--random_seed', type=int, default=1234)
+    parser.add_argument('--nepochs', type=int, default=10)
+    parser.add_argument('--model_name', default='PongRewardPredictor')
+    parser.add_argument('--use_adversary', action='store_true')
+    parser.add_argument('--gpuid', type=int, default=0)
+    parser.add_argument('--model_class', default='OurRewardPredictor')
+    parser.add_argument('--noise', type=float, default=None)
+    parser.add_argument('--loadname', default=None)
+    
+    args = parser.parse_args()
+    
+    mclass = OurRewardPredictor
+    resize=None
+    if args.model_class == 'OurSimpleRewardPredictor':
+        mclass = OurSimpleRewardPredictor
+        resize = 32
+        
+    loadmodel = False
+    if args.loadname is not None:
+        loadmodel=True
+    
+    torch.manual_seed(args.random_seed)
+    train_model(mclass,
+                module_relative_file(__file__, args.train_syllabus), 
+                module_relative_file(__file__, args.test_syllabus),
+                args.nepochs, 
+                args.model_name, 
+                args.use_adversary,
+                args.gpuid,
+                resize,
+                args.noise,
+                args.loadname,
+                loadmodel)
+    

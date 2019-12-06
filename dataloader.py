@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from torchvision import transforms, utils
-
+from torch.nn.functional import interpolate
 
 L2DATA = os.getenv('L2DATA')
 
@@ -39,7 +39,9 @@ def standard_size_map(size):
 def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_color_map, 
                  reward_map = standard_reward_map, size_map = standard_size_map,
                  game_keys=['l2arcadekit.l2agames:Pong'],
-                 correlate_exactly = False
+                 correlate_exactly = False,
+                 resize=None,
+                 noise=None
                  ):
     name = os.path.basename(os.path.splitext(json_file)[0])
     fullpath = os.path.join(L2DATA, 'data', name, name+'.hdf5')
@@ -84,6 +86,11 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
             
                 rewards = torch.Tensor(rewards)
                 states = torch.Tensor(states).permute(0,3,1,2) / 255.0
+                if resize is not None:
+                    states = interpolate(states, size=resize, mode='bilinear')
+                if noise is not None:
+                    states = states+noise*torch.randn(states.size())
+                    #states = (states-states.min())/(states.max()-states.min())
                 actions = torch.Tensor(actions)
             
                 all_states.append(states)

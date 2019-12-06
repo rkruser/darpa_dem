@@ -16,12 +16,15 @@ from dataloader import stat_grid
 # Should I have max pools like alexnet?
 class OurRewardPredictor(nn.Module):
     def __init__(self, loadmodel=False, loadfolder=L2DATA, experiment_name='experiment1', 
-                model_name="PongRewardsEpoch100", color_adversary=False, gpuid=0):
+                model_name="PongRewardsEpoch100", color_adversary=False, gpuid=0, loadname=None):
         super().__init__()
 
         if loadmodel:
+            if loadname is None:
+                loadname = model_name
+                
             print("Loading model")
-            loadfile = os.path.join(loadfolder, 'models', experiment_name, model_name+'.pkl')
+            loadfile = os.path.join(loadfolder, 'models', experiment_name, loadname+'.pkl')
             f = open(loadfile, 'rb')
             self.__dict__.update(pickle.load(f))
             f.close()
@@ -147,6 +150,131 @@ class OurRewardPredictor(nn.Module):
 
 
 
+        
+        
+# assume 3x32x32
+class OurSimpleRewardPredictor(nn.Module):
+    def __init__(self, loadmodel=False, loadfolder=L2DATA, experiment_name='experiment1', 
+                model_name="PongRewardsEpoch100", color_adversary=False, gpuid=0, loadname=None):
+        super().__init__()
+        print("Simple reward predictor")
+
+        if loadmodel:
+            if loadname is None:
+                loadname = model_name
+            print("Loading model")
+            loadfile = os.path.join(loadfolder, 'models', experiment_name, loadname+'.pkl')
+            f = open(loadfile, 'rb')
+            self.__dict__.update(pickle.load(f))
+            f.close()
+        else:
+            self.experiment_name = experiment_name
+            self.model_name = model_name
+            self.task_spaces = None
+            self.current_input_spaces = None
+            self.current_output_spaces = None
+            self.color_adversary = color_adversary
+
+            self.device = torch.device("cuda:{}".format(gpuid) if torch.cuda.is_available() else "cpu")
+
+            self.features = nn.Sequential(
+                nn.Linear(3*32*32, 1024),
+                nn.ReLU(inplace=True),
+                nn.Linear(1024, 256),
+                nn.ReLU(inplace=True)
+                )
+
+            self.reward_classifier = nn.Sequential(
+                nn.Dropout(),
+                nn.Linear(256, 256),
+                nn.ReLU(inplace=True),
+                nn.Linear(256,1)
+                )
+
+            self.features = self.features.to(self.device)
+            self.reward_classifier = self.reward_classifier.to(self.device)
+
+            self.main_optimizer = optim.Adam(chain(self.features.parameters(), self.reward_classifier.parameters()), 
+                                            lr=0.0002) #betas=(0.9, 0.999)
+
+            if self.color_adversary:
+                self.color_discriminator = nn.Sequential(
+                        nn.Dropout(), #?
+                        nn.Linear(256, 256),
+                        nn.ReLU(inplace=True),
+                        nn.Linear(256,1) #Just 1 for now, binary colors
+                        )
+                self.color_discriminator = self.color_discriminator.to(self.device)
+                self.disc_optimizer = optim.Adam(self.color_discriminator.parameters(), lr=0.0002)
+            else:
+                self.color_discriminator = None
+                self.disc_optimizer = None
+
+    # These don't affect the rest of the model currently
+    def set_task_spaces(self, task_spaces):
+        self.task_spaces = task_spaces
+
+    def set_input_space(self, input_spaces):
+        self.current_input_spaces = input_spaces
+
+    def set_output_space(self, output_spaces):
+        self.current_output_spaces = output_spaces
+
+    def forward(self, x):
+        # x probably has shape (batchsize x 3 x 1 x 128 x 128)
+        # x 1 is nframes
+#        x = x['10_frames']
+#        x = torch.Tensor(x) #From numpy array to Tensor
+        x = x.to(self.device)
+        x = x.view(x.size(0),-1)
+#        x = x[:,:,0,:,:].squeeze(2)
+        x = self.features(x)
+        #x = x.view(x.size(0),-1)
+        y = self.reward_classifier(x).squeeze()
+
+        if self.color_adversary:
+            w = x.detach() # ??
+            cdetached = self.color_discriminator(w).squeeze()
+            c = self.color_discriminator(x).squeeze() #don't see a way around two versions of same calculation
+        else:
+            cdetached = None
+            c = None
+
+        y_hat = { 'reward_pred': y, 'color_pred': c, 'adversary_pred':cdetached}
+#                  'reward': y.detach().cpu().numpy()  }
+
+        return y_hat #Question: should I make discriminator separate,
+                                    # and update its weights before redoing calculation?
+
+    def update(self, loss):
+       self.features.zero_grad()
+       self.reward_classifier.zero_grad()
+       mainLoss = loss['reward_loss'] #includes adversarial color loss
+       mainLoss.backward()
+       self.main_optimizer.step()
+       if self.color_adversary:
+           self.color_discriminator.zero_grad()
+           adversaryLoss = loss['adversary_loss']
+           adversaryLoss.backward()
+           self.disc_optimizer.step()
+
+    def save_model(self, folder=L2DATA):
+        fullfolder = os.path.join(folder, 'models', self.experiment_name)
+        if not os.path.exists(fullfolder):
+            os.makedirs(fullfolder)
+        fname = os.path.join(fullfolder, self.model_name+'.pkl')
+        while os.path.exists(fname):
+            print("Warning: model file already exists, press enter to overwrite or type a new model name")
+            newname = input()
+            if len(newname) > 0:
+                self.model_name = newname
+                fname = os.path.join(fullfolder, self.model_name+'.pkl')
+            else:
+                break
+            
+        f = open(fname, 'wb')
+        pickle.dump(self.__dict__, f, 2) #pickle with protocol 2 for efficiency
+        f.close()       
 
 class OurOptimizer:
     def __init__(self, model, lmbda=1):

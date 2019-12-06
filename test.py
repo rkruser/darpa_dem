@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 import learnkit
 from learnkit.utils import module_relative_file
 
-from models import OurRewardPredictor, OurOptimizer, Meters
+from models import OurRewardPredictor, OurSimpleRewardPredictor, OurOptimizer, Meters
 from dataloader import L2DATA, Construct_L2M_Dataset
 
 #from torch.utils.tensorboard import SummaryWriter
@@ -14,17 +14,18 @@ from dataloader import L2DATA, Construct_L2M_Dataset
 
 
 
-def test_model(test_syllabus, model_name, use_adversary):
+def test_model(mclass, test_syllabus, model_name, use_adversary, resize, noise):
     exp_name = os.path.basename(os.path.splitext(test_syllabus)[0]).split('_')[0]
-    model = OurRewardPredictor(loadmodel=True, experiment_name=exp_name, model_name=model_name,
+    model = mclass(loadmodel=True, experiment_name=exp_name, model_name=model_name,
                                 color_adversary=use_adversary)
+    model.train(False)
     optim = OurOptimizer(model)
 
 #    totalset = L2M_Pytorch_Dataset(syllabus)
 #    train_length = int(0.8*len(totalset))
 #    test_length = len(totalset)-train_length
 #    trainset, testset = torch.utils.data.random_split(totalset, (train_length, test_length))
-    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1)
+    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1, resize=resize, noise=noise)
 
     print("Test stats:")
     testset.print_statistics()
@@ -65,15 +66,27 @@ def test_model(test_syllabus, model_name, use_adversary):
 
 
 if __name__ == '__main__':
-   import argparse
-   parser = argparse.ArgumentParser()
-   parser.add_argument('--test_syllabus', default='experiment1_test.json')
-#   parser.add_argument('--train_syllabus', default='train_predict_total_reward_syllabus.json')
-   parser.add_argument('--random_seed', type=int, default=1234)
-   parser.add_argument('--model_name', default='PongRewardsEpoch100')
-   parser.add_argument('--use_adversary', action='store_true')
-   args = parser.parse_args()
-   torch.manual_seed(args.random_seed)
-   test_model(module_relative_file(__file__, args.test_syllabus),
-               args.model_name, 
-               args.use_adversary)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--test_syllabus', default='experiment1_test.json')
+#    parser.add_argument('--train_syllabus', default='train_predict_total_reward_syllabus.json')
+    parser.add_argument('--random_seed', type=int, default=1234)
+    parser.add_argument('--model_name', default='PongRewardsEpoch100')
+    parser.add_argument('--use_adversary', action='store_true')
+    parser.add_argument('--model_class', default='OurRewardPredictor')
+    parser.add_argument('--noise', type=float, default=None)
+     
+    args = parser.parse_args()
+    
+    mclass = OurRewardPredictor
+    resize=None
+    if args.model_class == 'OurSimpleRewardPredictor':
+        mclass = OurSimpleRewardPredictor
+        resize = 32  
+
+    torch.manual_seed(args.random_seed)
+    test_model(mclass, module_relative_file(__file__, args.test_syllabus),
+                args.model_name, 
+                args.use_adversary,
+                resize,
+                args.noise)
