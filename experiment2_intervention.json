@@ -1,0 +1,10 @@
+{
+  "name": "Test generation syllabus with L2Arcade episodes",
+  "author": "Ryen Krusinga <krusinga@cs.umd.edu>",
+  "contains": "episodes",
+  "default_params": {},
+  "instructions": [
+    {"$repeat": { "$episode": "$l2arcadekit.l2agames:Pong", "bot/paddle/width": 0.35, "bg_color": [200,50,50] }, "count": 10},
+    {"$repeat": { "$episode": "$l2arcadekit.l2agames:Pong", "bot/paddle/width": 0.1,  "bg_color": [50,50,200]  }, "count": 10}
+  ]
+}

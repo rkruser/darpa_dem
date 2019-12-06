@@ -38,7 +38,9 @@ def standard_size_map(size):
 
 def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_color_map, 
                  reward_map = standard_reward_map, size_map = standard_size_map,
-                 game_keys=['l2arcadekit.l2agames:Pong']):
+                 game_keys=['l2arcadekit.l2agames:Pong'],
+                 correlate_exactly = False
+                 ):
     name = os.path.basename(os.path.splitext(json_file)[0])
     fullpath = os.path.join(L2DATA, 'data', name, name+'.hdf5')
 #    color_map = color_map # How to turn rgb colors into discrete labels
@@ -120,6 +122,9 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                                     {'reward':labels['reward'][test_inds],
                                      'bg_color':labels['bg_color'][test_inds],
                                      'bot/paddle/width':labels['bot/paddle/width'][test_inds]})
+
+       
+
     return train_set, test_set
 
 
