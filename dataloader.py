@@ -63,6 +63,7 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
             param_values = json.loads(param_set.attrs['parameter_values'])
             current_color = torch.Tensor(1).fill_(color_map(param_values['bg_color']))
             current_size = torch.Tensor(1).fill_(size_map(param_values['bot/paddle/width']))
+#            print(current_color, current_size)
             
             for episode_id in iter(param_set):
                 episode = param_set[episode_id]
@@ -100,6 +101,9 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
     labels = {'reward':torch.cat(all_labels['reward']),
               'bg_color':torch.cat(all_labels['bg_color']),
               'bot/paddle/width':torch.cat(all_labels['bot/paddle/width'])}
+
+    print("Overal dataset", stat_grid(labels['reward'], 
+            labels['bot/paddle/width'], labels['bg_color']))
 
     train_size = int(0.8*size)
     test_size = size - train_size
@@ -139,7 +143,8 @@ def stat_grid(values, xproperty, yproperty):
 def print_grid(grid, xlabels, ylabels):
     print('    ', end='')
     for j in range(len(ylabels)):
-        print(ylabels[j]+' ')
+        print(ylabels[j]+' ', end='')
+    print('\n', end='')
     for i in range(len(grid)):
         print(xlabels[i]+'  ', grid[i])
 

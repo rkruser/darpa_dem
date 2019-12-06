@@ -184,9 +184,15 @@ class OurOptimizer:
         size_actual = torch.Tensor(y['bot/paddle/width']).to(self.device)
 
         reward_loss = nn.functional.binary_cross_entropy_with_logits(reward_predictions, reward_actual)
-        reward_acc = ((reward_predictions > 0).int() == reward_actual.int()).sum().float() / len(reward_actual)
+        reward_num_correct = ((reward_predictions > 0).int() == reward_actual.int()).sum().float()
+        reward_acc = reward_num_correct / len(reward_actual)
 
-        sumgrid, totalgrid, proportiongrid = stat_grid(reward_predictions, size_actual, color_actual)
+        sumgrid, totalgrid, proportiongrid = stat_grid(torch.sigmoid(reward_predictions), size_actual, color_actual)
+
+        # Debugging purposes
+        if any(torch.isnan(proportiongrid.flatten())):
+            print("Nans!")
+
 
         if color_predictions is not None:
             color_loss = nn.functional.binary_cross_entropy_with_logits(color_predictions, 1-color_actual)
@@ -204,10 +210,11 @@ class OurOptimizer:
         losses = { 'reward_loss': reward_loss,
                    'adversary_loss': adversary_loss,
                    'reward_acc': reward_acc,
+                   'reward_num_correct': reward_num_correct,
                    'adversary_acc': adversary_acc,
                    'sumgrid': sumgrid.to('cpu'),
                    'totalgrid': totalgrid.to('cpu'),
-                   'proportiongrid': proportiongrid.to('cpu')
+                   'proportiongrid': proportiongrid.to('cpu'),
                    }
 
         return losses
@@ -236,7 +243,7 @@ class AverageMeter:
 
     def update(self, value, num=1):
         self.count += num
-        self.value += num*value #Not sure if that works for all losses, but works for accuracy
+        self.value += value #Not sure if that works for all losses, but works for accuracy
 
     def reset(self):
         self.count = self.count_init_val
@@ -247,7 +254,12 @@ class AverageMeter:
 #            return self.value / self.count
 #        else:
 #            return 0
-        return self.value / self.count
+        try:
+            returnval = self.value / self.count
+        except ZeroDivisionError:
+            returnval = self.init_val
+
+        return returnval
 
 
 class Meters:

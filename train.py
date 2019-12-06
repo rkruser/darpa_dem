@@ -59,8 +59,8 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
 
             # Logging
             meters.update('trainloss', loss['reward_loss'].item(), batch_size)
-            meters.update('trainacc', loss['reward_acc'].item(), batch_size)
-            meters.update('traingrid', loss['proportiongrid'], loss['totalgrid'])
+            meters.update('trainacc', loss['reward_num_correct'].item(), batch_size)
+            meters.update('traingrid', loss['sumgrid'], loss['totalgrid'])
             if loss['adversary_loss'] is not None:
                 meters.update('trainloss_adv', loss['adversary_loss'].item(), batch_size)
                 meters.update('trainacc_adv', loss['adversary_acc'].item(), batch_size)
@@ -78,8 +78,8 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
 
             # Logging
             meters.update('testloss', loss['reward_loss'].item(), batch_size)
-            meters.update('testacc', loss['reward_acc'].item(), batch_size)
-            meters.update('testgrid', loss['proportiongrid'], loss['totalgrid'])
+            meters.update('testacc', loss['reward_num_correct'].item(), batch_size)
+            meters.update('testgrid', loss['sumgrid'], loss['totalgrid'])
             if loss['adversary_loss'] is not None:
                 meters.update('testloss_adv', loss['adversary_loss'].item(), batch_size)
                 meters.update('testacc_adv', loss['adversary_acc'].item(), batch_size)
@@ -91,11 +91,12 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
         writer.add_scalar('accuracy/main/test', meters.average('testacc'), epoch)
 
         train_grid_average = meters.average('traingrid')
-        test_grid_average = meters.average('testgrid')
+        print(train_grid_average)
+#        test_grid_average = meters.average('testgrid')
         for i in range(len(train_grid_average)):
             for j in range(len(train_grid_average[i])):
-                writer.add_scalar('train/grid_{0}_{1}'.format(i,j), train_grid_average[i,j].item())
-                writer.add_scalar('test/grid_{0}_{1}'.format(i,j), test_grid_average[i,j].item())
+                writer.add_scalar('train/grid_{0}_{1}'.format(i,j), train_grid_average[i,j].item(), epoch)
+#                writer.add_scalar('test/grid_{0}_{1}'.format(i,j), test_grid_average[i,j].item())
 
         writer.add_scalar('loss/adv/train', meters.average('trainloss_adv'), epoch)
         writer.add_scalar('accuracy/adv/train', meters.average('trainacc_adv'), epoch)
@@ -104,14 +105,14 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
 
             
 
-    model.save_model() 
+#    model.save_model() 
 
 
 if __name__ == '__main__':
    import argparse
    parser = argparse.ArgumentParser()
-   parser.add_argument('--syllabus', default='gen_syllabus.json')
-   parser.add_argument('--train_syllabus', default='train_predict_total_reward_syllabus.json')
+   parser.add_argument('--syllabus', default='experiment1.json')
+#   parser.add_argument('--train_syllabus', default='train_predict_total_reward_syllabus.json')
    parser.add_argument('--random_seed', type=int, default=1234)
    parser.add_argument('--nepochs', type=int, default=10)
    parser.add_argument('--model_name', default='PongRewardPredictor')
