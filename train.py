@@ -14,11 +14,10 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 
-def train_model(train_syllabus, test_syllabus, nepochs, model_name, use_adversary):
-    writer = SummaryWriter()
+def train_model(train_syllabus, test_syllabus, nepochs, model_name, use_adversary, gpu=0):
     exp_name = os.path.basename(os.path.splitext(train_syllabus)[0])
     model = OurRewardPredictor(loadmodel=False, experiment_name=exp_name, model_name=model_name,
-                                color_adversary=use_adversary)
+                                color_adversary=use_adversary, gpuid=gpu)
     optim = OurOptimizer(model)
 
 #    totalset = L2M_Pytorch_Dataset(syllabus)
@@ -120,10 +119,12 @@ if __name__ == '__main__':
    parser.add_argument('--nepochs', type=int, default=10)
    parser.add_argument('--model_name', default='PongRewardPredictor')
    parser.add_argument('--use_adversary', action='store_true')
+   parser.add_argument('--gpuid', type=int, default=0)
    args = parser.parse_args()
    torch.manual_seed(args.random_seed)
    train_model(module_relative_file(__file__, args.train_syllabus), 
                module_relative_file(__file__, args.test_syllabus),
                args.nepochs, 
                args.model_name, 
-               args.use_adversary)
+               args.use_adversary,
+               args.gpuid)

@@ -16,7 +16,7 @@ from dataloader import stat_grid
 # Should I have max pools like alexnet?
 class OurRewardPredictor(nn.Module):
     def __init__(self, loadmodel=False, loadfolder=L2DATA, experiment_name='experiment1', 
-                model_name="PongRewardsEpoch100", color_adversary=False):
+                model_name="PongRewardsEpoch100", color_adversary=False, gpuid=0):
         super().__init__()
 
         if loadmodel:
@@ -33,7 +33,7 @@ class OurRewardPredictor(nn.Module):
             self.current_output_spaces = None
             self.color_adversary = color_adversary
 
-            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            self.device = torch.device("cuda:{}".format(gpuid) if torch.cuda.is_available() else "cpu")
 
             self.features = nn.Sequential(
                 nn.Conv2d(3, 64, 5, stride=2, padding=2), # 3x128x128 --> 64x64x64 =lower((128-5+2*2)/2)+1
