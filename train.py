@@ -14,9 +14,9 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 
-def train_model(syllabus, nepochs, model_name, use_adversary):
+def train_model(train_syllabus, test_syllabus, nepochs, model_name, use_adversary):
     writer = SummaryWriter()
-    exp_name = os.path.basename(os.path.splitext(syllabus)[0])
+    exp_name = os.path.basename(os.path.splitext(train_syllabus)[0])
     model = OurRewardPredictor(loadmodel=False, experiment_name=exp_name, model_name=model_name,
                                 color_adversary=use_adversary)
     optim = OurOptimizer(model)
@@ -25,7 +25,9 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
 #    train_length = int(0.8*len(totalset))
 #    test_length = len(totalset)-train_length
 #    trainset, testset = torch.utils.data.random_split(totalset, (train_length, test_length))
-    trainset, testset = Construct_L2M_Dataset(syllabus)
+    trainset, _ = Construct_L2M_Dataset(train_syllabus, train_proportion=1)
+    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1)
+
     print("Train stats:")
     trainset.print_statistics()
     print("Test stats:")
@@ -63,7 +65,7 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
             meters.update('traingrid', loss['sumgrid'], loss['totalgrid'])
             if loss['adversary_loss'] is not None:
                 meters.update('trainloss_adv', loss['adversary_loss'].item(), batch_size)
-                meters.update('trainacc_adv', loss['adversary_acc'].item(), batch_size)
+                meters.update('trainacc_adv', loss['adversary_num_correct'].item(), batch_size)
 
         # Test
         print("  Test")
@@ -82,7 +84,7 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
             meters.update('testgrid', loss['sumgrid'], loss['totalgrid'])
             if loss['adversary_loss'] is not None:
                 meters.update('testloss_adv', loss['adversary_loss'].item(), batch_size)
-                meters.update('testacc_adv', loss['adversary_acc'].item(), batch_size)
+                meters.update('testacc_adv', loss['adversary_num_correct'].item(), batch_size)
 
         # Tensorboard logging
         writer.add_scalar('loss/main/train', meters.average('trainloss'), epoch)
@@ -92,11 +94,11 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
 
         train_grid_average = meters.average('traingrid')
         print(train_grid_average)
-#        test_grid_average = meters.average('testgrid')
+        test_grid_average = meters.average('testgrid')
         for i in range(len(train_grid_average)):
             for j in range(len(train_grid_average[i])):
                 writer.add_scalar('train/grid_{0}_{1}'.format(i,j), train_grid_average[i,j].item(), epoch)
-#                writer.add_scalar('test/grid_{0}_{1}'.format(i,j), test_grid_average[i,j].item())
+                writer.add_scalar('test/grid_{0}_{1}'.format(i,j), test_grid_average[i,j].item(), epoch)
 
         writer.add_scalar('loss/adv/train', meters.average('trainloss_adv'), epoch)
         writer.add_scalar('accuracy/adv/train', meters.average('trainacc_adv'), epoch)
@@ -105,13 +107,14 @@ def train_model(syllabus, nepochs, model_name, use_adversary):
 
             
 
-#    model.save_model() 
+    model.save_model() 
 
 
 if __name__ == '__main__':
    import argparse
    parser = argparse.ArgumentParser()
-   parser.add_argument('--syllabus', default='experiment1.json')
+   parser.add_argument('--train_syllabus', default='experiment1.json')
+   parser.add_argument('--test_syllabus', default='experiment1_test.json')
 #   parser.add_argument('--train_syllabus', default='train_predict_total_reward_syllabus.json')
    parser.add_argument('--random_seed', type=int, default=1234)
    parser.add_argument('--nepochs', type=int, default=10)
@@ -119,5 +122,8 @@ if __name__ == '__main__':
    parser.add_argument('--use_adversary', action='store_true')
    args = parser.parse_args()
    torch.manual_seed(args.random_seed)
-   train_model(module_relative_file(__file__, args.syllabus), args.nepochs, 
-                args.model_name, args.use_adversary)
+   train_model(module_relative_file(__file__, args.train_syllabus), 
+               module_relative_file(__file__, args.test_syllabus),
+               args.nepochs, 
+               args.model_name, 
+               args.use_adversary)

@@ -190,8 +190,8 @@ class OurOptimizer:
         sumgrid, totalgrid, proportiongrid = stat_grid(torch.sigmoid(reward_predictions), size_actual, color_actual)
 
         # Debugging purposes
-        if any(torch.isnan(proportiongrid.flatten())):
-            print("Nans!")
+#        if any(torch.isnan(proportiongrid.flatten())):
+#            print("Nans!")
 
 
         if color_predictions is not None:
@@ -200,10 +200,12 @@ class OurOptimizer:
             color_loss = 0
         if adversary_predictions is not None:
             adversary_loss = nn.functional.binary_cross_entropy_with_logits(adversary_predictions, color_actual)
-            adversary_acc = ((adversary_predictions > 0).int() == color_actual.int()).sum().float() / len(color_actual)
+            adversary_num_correct = ((adversary_predictions > 0).int() == color_actual.int()).sum().float()
+            adversary_acc = adversary_num_correct / len(color_actual)
         else:
             adversary_loss = None
             adversary_acc = None
+            adversary_num_correct = None
 
         reward_loss = reward_loss+self.lmbda*color_loss
 
@@ -212,6 +214,7 @@ class OurOptimizer:
                    'reward_acc': reward_acc,
                    'reward_num_correct': reward_num_correct,
                    'adversary_acc': adversary_acc,
+                   'adversary_num_correct': adversary_num_correct,
                    'sumgrid': sumgrid.to('cpu'),
                    'totalgrid': totalgrid.to('cpu'),
                    'proportiongrid': proportiongrid.to('cpu'),
