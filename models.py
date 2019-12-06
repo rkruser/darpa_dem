@@ -15,8 +15,8 @@ from dataloader import stat_grid
 
 # Should I have max pools like alexnet?
 class OurRewardPredictor(nn.Module):
-    def __init__(self, loadmodel=False, loadfolder=L2DATA, experiment_name='gen_syllabus', 
-                model_name="PongRewardPredictor", color_adversary=False):
+    def __init__(self, loadmodel=False, loadfolder=L2DATA, experiment_name='experiment1', 
+                model_name="PongRewardsEpoch100", color_adversary=False):
         super().__init__()
 
         if loadmodel:
