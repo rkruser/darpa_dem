@@ -14,10 +14,10 @@ from dataloader import L2DATA, Construct_L2M_Dataset
 
 
 
-def test_model(mclass, test_syllabus, model_name, use_adversary, resize, noise):
+def test_model(mclass, test_syllabus, model_name, use_adversary, resize, noise, gpuid):
     exp_name = os.path.basename(os.path.splitext(test_syllabus)[0]).split('_')[0]
     model = mclass(loadmodel=True, experiment_name=exp_name, model_name=model_name,
-                                color_adversary=use_adversary)
+                                color_adversary=use_adversary, gpuid=gpuid)
     model.train(False)
     optim = OurOptimizer(model)
 
@@ -75,6 +75,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_adversary', action='store_true')
     parser.add_argument('--model_class', default='OurRewardPredictor')
     parser.add_argument('--noise', type=float, default=None)
+    parser.add_argument('--gpuid', type=int, default=0)
      
     args = parser.parse_args()
     
@@ -89,4 +90,5 @@ if __name__ == '__main__':
                 args.model_name, 
                 args.use_adversary,
                 resize,
-                args.noise)
+                args.noise,
+                args.gpuid)

@@ -120,7 +120,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--train_syllabus', default='experiment1.json')
     parser.add_argument('--test_syllabus', default='experiment1_test.json')
-#    parser.add_argument('--train_syllabus', default='train_predict_total_reward_syllabus.json')
     parser.add_argument('--random_seed', type=int, default=1234)
     parser.add_argument('--nepochs', type=int, default=10)
     parser.add_argument('--model_name', default='PongRewardPredictor')
