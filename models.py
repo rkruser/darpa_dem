@@ -19,6 +19,49 @@ class OurRewardPredictor(nn.Module):
                 model_name="PongRewardsEpoch100", color_adversary=False, gpuid=0, loadname=None):
         super().__init__()
 
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 64, 5, stride=2, padding=2), # 3x128x128 --> 64x64x64 =lower((128-5+2*2)/2)+1
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 128, 5, stride=2, padding=2), # 64x64x64 --> 128x32x32
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 256, 3, stride=2, padding=1), # 128x32x32 --> 256x16x16
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, 3, stride=2, padding=1), # 256x16x16 --> 256x8x8
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, 3, stride=2, padding=1), # 256x8x8 --> 256x4x4
+            nn.ReLU(inplace=True)
+            )
+
+        self.reward_classifier = nn.Sequential(
+            nn.Dropout(), #?
+            nn.Linear(256*4*4, 256),
+            nn.ReLU(inplace=True),
+            nn.Dropout(), #?
+            nn.Linear(256,256),
+            nn.ReLU(inplace=True),
+            nn.Linear(256,1)
+            )
+
+
+#            self.main_optimizer = optim.Adam(chain(self.features.parameters(), self.reward_classifier.parameters()), 
+#                                            lr=0.0002) #betas=(0.9, 0.999)
+
+        if color_adversary:
+            self.color_discriminator = nn.Sequential(
+                    nn.Dropout(), #?
+                    nn.Linear(256*4*4, 256),
+                    nn.ReLU(inplace=True),
+                    nn.Dropout(), #?
+                    nn.Linear(256,256),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(256,1) #Just 1 for now, binary colors
+                    )
+    #                self.color_discriminator = self.color_discriminator.to(self.device)
+    #                self.disc_optimizer = optim.Adam(self.color_discriminator.parameters(), lr=0.0002)
+        else:
+            self.color_discriminator = None
+            self.disc_optimizer = None
+
         if loadmodel:
             if loadname is None:
                 loadname = model_name
@@ -26,51 +69,12 @@ class OurRewardPredictor(nn.Module):
             loadfile = os.path.join(loadfolder, 'models', experiment_name, loadname+'.pkl')
             print("Loading model from {}".format(loadfile))
             with open(loadfile, 'rb') as f:
-                self.__dict__.update(pickle.load(f))
-        else:
-
-            self.features = nn.Sequential(
-                nn.Conv2d(3, 64, 5, stride=2, padding=2), # 3x128x128 --> 64x64x64 =lower((128-5+2*2)/2)+1
-                nn.ReLU(inplace=True),
-                nn.Conv2d(64, 128, 5, stride=2, padding=2), # 64x64x64 --> 128x32x32
-                nn.ReLU(inplace=True),
-                nn.Conv2d(128, 256, 3, stride=2, padding=1), # 128x32x32 --> 256x16x16
-                nn.ReLU(inplace=True),
-                nn.Conv2d(256, 256, 3, stride=2, padding=1), # 256x16x16 --> 256x8x8
-                nn.ReLU(inplace=True),
-                nn.Conv2d(256, 256, 3, stride=2, padding=1), # 256x8x8 --> 256x4x4
-                nn.ReLU(inplace=True)
-                )
-
-            self.reward_classifier = nn.Sequential(
-                nn.Dropout(), #?
-                nn.Linear(256*4*4, 256),
-                nn.ReLU(inplace=True),
-                nn.Dropout(), #?
-                nn.Linear(256,256),
-                nn.ReLU(inplace=True),
-                nn.Linear(256,1)
-                )
-
-
-#            self.main_optimizer = optim.Adam(chain(self.features.parameters(), self.reward_classifier.parameters()), 
-#                                            lr=0.0002) #betas=(0.9, 0.999)
-
-            if self.color_adversary:
-                self.color_discriminator = nn.Sequential(
-                        nn.Dropout(), #?
-                        nn.Linear(256*4*4, 256),
-                        nn.ReLU(inplace=True),
-                        nn.Dropout(), #?
-                        nn.Linear(256,256),
-                        nn.ReLU(inplace=True),
-                        nn.Linear(256,1) #Just 1 for now, binary colors
-                        )
-#                self.color_discriminator = self.color_discriminator.to(self.device)
-#                self.disc_optimizer = optim.Adam(self.color_discriminator.parameters(), lr=0.0002)
-            else:
-                self.color_discriminator = None
-                self.disc_optimizer = None
+                d = pickle.load(f)
+                self.features = d['_modules']['features']
+                self.reward_classifier = d['_modules']['reward_classifier']
+                if 'color_discriminator' in d['_modules']:
+                    self.color_discriminator = d['_modules']['color_discriminator']
+                #self.__dict__.update(d)
 
         self.experiment_name = experiment_name
         self.model_name = model_name
@@ -195,7 +199,7 @@ class OurSimpleRewardPredictor(nn.Module):
 #            self.main_optimizer = optim.Adam(chain(self.features.parameters(), self.reward_classifier.parameters()), 
 #                                            lr=0.0002) #betas=(0.9, 0.999)
 
-            if self.color_adversary:
+            if color_adversary:
                 self.color_discriminator = nn.Sequential(
                         nn.Dropout(), #?
                         nn.Linear(256, 256),
