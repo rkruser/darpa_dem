@@ -14,8 +14,6 @@ from torch.utils.tensorboard import SummaryWriter
 import time
 
 
-
-
 def train_model(mclass, train_syllabus, test_syllabus, nepochs, model_name, use_adversary, gpu=0,
                 resize=None, noise=None, loadname=None, loadmodel=False):
     exp_name = os.path.basename(os.path.splitext(train_syllabus)[0])
