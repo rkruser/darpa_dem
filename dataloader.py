@@ -86,6 +86,9 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
             
                 rewards = torch.Tensor(rewards)
                 states = torch.Tensor(states).permute(0,3,1,2) / 255.0
+                # Apparently this is in RBG, not RGB, need to rearrange here or in files
+#                color_perm = torch.LongTensor([0,2,1]) # Undo RBG
+#                states = states[:,color_perm, :, :]
                 if resize is not None:
                     states = interpolate(states, size=resize, mode='bilinear')
                 if noise is not None:
@@ -111,10 +114,10 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
               'bg_color':torch.cat(all_labels['bg_color']),
               'bot/paddle/width':torch.cat(all_labels['bot/paddle/width'])}
 
-    print("Overall dataset", stat_grid(labels['reward'], 
-            labels['bot/paddle/width'], labels['bg_color']))
+#    print("Overall dataset", stat_grid(labels['reward'], 
+#            labels['bot/paddle/width'], labels['bg_color']))
 
-    train_size = int(0.8*size)
+    train_size = int(train_proportion*size)
     test_size = size - train_size
     inds = torch.randperm(size)
     train_inds = inds[:train_size]
@@ -132,6 +135,11 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                                      'bot/paddle/width':labels['bot/paddle/width'][test_inds]})
 #                                     noise=noise)
 
+    print("\nTrain stats")
+    train_set.print_statistics()
+
+    print("\nTest stats")
+    test_set.print_statistics()
        
 
     return train_set, test_set

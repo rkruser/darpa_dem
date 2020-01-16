@@ -8,3 +8,4 @@
 *.gz
 __pycache__/
 runs/
+latex/causality_ijcai_l2m.pdf

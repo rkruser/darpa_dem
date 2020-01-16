@@ -27,7 +27,7 @@ def test_model(mclass, test_syllabus, model_name, use_adversary, resize, noise, 
 #    trainset, testset = torch.utils.data.random_split(totalset, (train_length, test_length))
     testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1, resize=resize, noise=noise)
 
-    print("Test stats:")
+    print("\n\n\nTest stats:")
     testset.print_statistics()
     testloader = DataLoader(testset, batch_size=64, shuffle=False, num_workers=4)
 
