@@ -26,7 +26,7 @@ save_image(last_im, './latex/figures/'+args.syllabus+'_last_im.png')
 
 for i in range(10):
     im, _ = dataset[i]
-    save_image(im, './latex/figures/'+args.syllabus+'_im'+str(i)+'.png')
+    save_image(im, './latex/figures/images/'+args.syllabus+'_im'+str(i)+'.png')
 
 
 

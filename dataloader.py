@@ -111,7 +111,7 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
               'bg_color':torch.cat(all_labels['bg_color']),
               'bot/paddle/width':torch.cat(all_labels['bot/paddle/width'])}
 
-    print("Overal dataset", stat_grid(labels['reward'], 
+    print("Overall dataset", stat_grid(labels['reward'], 
             labels['bot/paddle/width'], labels['bg_color']))
 
     train_size = int(0.8*size)
@@ -124,11 +124,13 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                                     {'reward':labels['reward'][train_inds],
                                      'bg_color':labels['bg_color'][train_inds],
                                      'bot/paddle/width':labels['bot/paddle/width'][train_inds]})
+#                                     noise=noise)
     test_set = L2M_Pytorch_Dataset(test_size, states[test_inds], 
                                     rewards[test_inds], actions[test_inds],
                                     {'reward':labels['reward'][test_inds],
                                      'bg_color':labels['bg_color'][test_inds],
                                      'bot/paddle/width':labels['bot/paddle/width'][test_inds]})
+#                                     noise=noise)
 
        
 
@@ -161,12 +163,13 @@ def print_grid(grid, xlabels, ylabels):
         print(xlabels[i]+'  ', grid[i])
 
 class L2M_Pytorch_Dataset(Dataset):
-    def __init__(self, size, states, rewards, actions, labels):
+    def __init__(self, size, states, rewards, actions, labels): #,noise=None):
         self.size = size 
         self.states = states 
         self.rewards = rewards 
         self.actions = actions
         self.labels = labels
+#        self.noise = noise
 
     def __len__(self):
         return self.size
@@ -174,9 +177,14 @@ class L2M_Pytorch_Dataset(Dataset):
 
     def __getitem__(self, index):
 #        return self.states[index], self.labels['reward'][index], self.labels['bg_color'][index], self.labels['bot/paddle/width'][index]
-        return self.states[index], { 'reward': self.labels['reward'][index], 
+        labels = { 'reward': self.labels['reward'][index], 
                                     'bg_color': self.labels['bg_color'][index], 
                                     'bot/paddle/width': self.labels['bot/paddle/width'][index] }
+#        if self.noise is None:
+        return self.states[index], labels
+#        else:
+#            im = self.states[index]
+#            return im+self.noise*torch.randn(im.size()), labels
 
     def statistics(self):
         return stat_grid(self.labels['reward'], self.labels['bot/paddle/width'], self.labels['bg_color'])
