@@ -2,6 +2,7 @@
   "name": "Test generation syllabus with L2Arcade episodes",
   "author": "Ryen Krusinga <krusinga@cs.umd.edu>",
   "contains": "episodes",
+  "comments": "Large enemy / small player blue, small enemy/large player red",
   "default_params": {},
   "instructions": [
     {"$repeat": { "$episode": "$l2arcadekit.l2agames:Pong", "bot/paddle/width": 0.1, "bg_color": [200,50,50] }, "count": 10},

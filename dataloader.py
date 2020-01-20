@@ -28,7 +28,7 @@ def standard_reward_map(reward_value):
     else:
         return 1
 
-# Large = 1, small = 0
+# Large = 1, small = 0 # For weird code history reasons
 def standard_size_map(size):
     if size > 0.2:
         return 1
@@ -66,7 +66,10 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
             param_set = game[param_hash]
             param_values = json.loads(param_set.attrs['parameter_values'])
             current_color = torch.Tensor(1).fill_(color_map(param_values['bg_color']))
-            current_size = torch.Tensor(1).fill_(size_map(param_values['bot/paddle/width']))
+            current_size = torch.Tensor(1).fill_(size_map(param_values['agent/paddle/width']))
+#            current_size = torch.Tensor(1).fill_(size_map(param_values['bot/paddle/width']))
+#             Note difference between bot/paddle/width and agent/paddle/width!
+
 #            print(current_color, current_size)
             
             for episode_id in iter(param_set):

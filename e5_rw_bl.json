@@ -1,0 +1,19 @@
+{
+  "name": "Test generation syllabus with L2Arcade episodes",
+  "author": "Ryen Krusinga <krusinga@cs.umd.edu>",
+  "contains": "episodes",
+  "comments": "Red wins more often (large player:bot paddle ratio), blue wins less often (smaller player:bot ratio)",
+  "instructions": [
+    {"$repeat": { "$episode": "$l2arcadekit.l2agames:Pong", "agent/paddle/width": 0.35, "bot/paddle/width": 0.1, "bg_color": [200,50,50] }, "count": 25},
+    {"$repeat": { "$episode": "$l2arcadekit.l2agames:Pong", "agent/paddle/width": 0.1, "bot/paddle/width":0.15, "bg_color": [50,50,200]  }, "count": 25}
+  ],
+  "default_params": {
+    "bot/paddle/height": 0.04,
+    "bot/paddle/width": 0.1,
+    "bot/skill": 0.2,
+    "agent/paddle/height": 0.04,
+    "agent/paddle/width": 0.25,
+    "ball/color": [101,102,103],
+    "ball/size": 10
+  }
+}
