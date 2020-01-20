@@ -76,7 +76,8 @@ class OurRewardPredictor(nn.Module):
                     self.color_discriminator = d['_modules']['color_discriminator']
                 #self.__dict__.update(d)
 
-        self.experiment_name = experiment_name
+#        self.experiment_name = experiment_name
+        self.experiment_name = experiment_name.split('_')[0]
         self.model_name = model_name
         self.task_spaces = None
         self.current_input_spaces = None
