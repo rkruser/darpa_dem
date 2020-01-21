@@ -74,5 +74,5 @@ if __name__ == "__main__":
     syllabus_basename = os.path.basename(syllabus_path)
 
     # 'generate_data' reads the syllabus and calls 'run_arcade_episode' for each episode in the syllabus
-    generate_data(syllabus_path, run_arcade_episode, syllabus_seed=1234)
+    generate_data(syllabus_path, run_arcade_episode, syllabus_seed=1235)
 

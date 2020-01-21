@@ -41,7 +41,8 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                  game_keys=['l2arcadekit.l2agames:Pong'],
                  correlate_exactly = False,
                  resize=None,
-                 noise=None
+                 noise=None,
+                 cutoff=None #float for where to cut off the dataset
                  ):
     name = os.path.basename(os.path.splitext(json_file)[0])
     fullpath = os.path.join(L2DATA, 'data', name, name+'.hdf5')
@@ -88,22 +89,32 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                 states_dset.read_direct(states)
             
                 rewards = torch.Tensor(rewards)
+                reward_sum = rewards.sum().item() #Must get before cutoff for final score
                 states = torch.Tensor(states).permute(0,3,1,2) / 255.0
                 # Apparently this is in RBG, not RGB, need to rearrange here or in files
 #                color_perm = torch.LongTensor([0,2,1]) # Undo RBG
 #                states = states[:,color_perm, :, :]
+                actions = torch.Tensor(actions)
+
+                # If we want to chop off the last part of a game
+                if cutoff is not None:
+                    cutoff_index = int(cutoff*len(states))
+                    states = states[:cutoff_index]
+                    rewards = rewards[:cutoff_index]
+                    actions = actions[:cutoff_index]
+
                 if resize is not None:
                     states = interpolate(states, size=resize, mode='bilinear')
                 if noise is not None:
                     states = states+noise*torch.randn(states.size())
                     #states = (states-states.min())/(states.max()-states.min())
-                actions = torch.Tensor(actions)
+
             
                 all_states.append(states)
                 all_actions.append(actions)
                 all_rewards.append(rewards)
                 counts.append(len(states))
-                all_labels['reward'].append(torch.Tensor(len(states)).fill_(reward_map(rewards.sum().item())))
+                all_labels['reward'].append(torch.Tensor(len(states)).fill_(reward_map(reward_sum)))
                 all_labels['bg_color'].append(current_color.repeat(len(states)))
                 all_labels['bot/paddle/width'].append(current_size.repeat(len(states)))
 
@@ -138,11 +149,11 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                                      'bot/paddle/width':labels['bot/paddle/width'][test_inds]})
 #                                     noise=noise)
 
-    print("\nTrain stats")
-    train_set.print_statistics()
+#    print("\nTrain stats")
+#    train_set.print_statistics()
 
-    print("\nTest stats")
-    test_set.print_statistics()
+#    print("\nTest stats")
+#    test_set.print_statistics()
        
 
     return train_set, test_set

@@ -15,7 +15,7 @@ import time
 
 
 def train_model(mclass, train_syllabus, test_syllabus, nepochs, model_name, use_adversary, gpu=0,
-                resize=None, noise=None, loadname=None, loadmodel=False):
+                resize=None, noise=None, loadname=None, loadmodel=False, cutoff=None):
     exp_name = os.path.basename(os.path.splitext(train_syllabus)[0])
     model = mclass(loadmodel=loadmodel, experiment_name=exp_name, model_name=model_name,
                                 color_adversary=use_adversary, gpuid=gpu, loadname=loadname)
@@ -25,8 +25,8 @@ def train_model(mclass, train_syllabus, test_syllabus, nepochs, model_name, use_
 #    train_length = int(0.8*len(totalset))
 #    test_length = len(totalset)-train_length
 #    trainset, testset = torch.utils.data.random_split(totalset, (train_length, test_length))
-    trainset, _ = Construct_L2M_Dataset(train_syllabus, train_proportion=1, resize=resize, noise=noise)
-    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1, resize=resize, noise=None)
+    trainset, _ = Construct_L2M_Dataset(train_syllabus, train_proportion=1, resize=resize, noise=noise, cutoff=cutoff)
+    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1, resize=resize, noise=None, cutoff=cutoff)
 
     print("Train stats:")
     trainset.print_statistics()
@@ -126,7 +126,8 @@ if __name__ == '__main__':
     parser.add_argument('--model_class', default='OurRewardPredictor')
     parser.add_argument('--noise', type=float, default=None)
     parser.add_argument('--loadname', default=None)
-    
+    parser.add_argument('--cutoff', type=float, default=None)
+   
     args = parser.parse_args()
     
     mclass = OurRewardPredictor
@@ -150,5 +151,6 @@ if __name__ == '__main__':
                 resize,
                 args.noise,
                 args.loadname,
-                loadmodel)
+                loadmodel,
+                args.cutoff)
     
