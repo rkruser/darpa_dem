@@ -14,7 +14,7 @@ from dataloader import L2DATA, Construct_L2M_Dataset
 
 
 
-def test_model(mclass, test_syllabus, model_name, use_adversary, resize, noise, gpuid):
+def test_model(mclass, test_syllabus, model_name, use_adversary, resize, noise, gpuid, cutoff):
     exp_name = os.path.basename(os.path.splitext(test_syllabus)[0]).split('_')[0]
     model = mclass(loadmodel=True, experiment_name=exp_name, model_name=model_name,
                                 color_adversary=use_adversary, gpuid=gpuid)
@@ -25,7 +25,7 @@ def test_model(mclass, test_syllabus, model_name, use_adversary, resize, noise, 
 #    train_length = int(0.8*len(totalset))
 #    test_length = len(totalset)-train_length
 #    trainset, testset = torch.utils.data.random_split(totalset, (train_length, test_length))
-    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1, resize=resize, noise=noise)
+    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1, resize=resize, noise=noise, cutoff=cutoff)
 
     print("\n\n\nTest stats:")
     testset.print_statistics()
@@ -76,6 +76,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_class', default='OurRewardPredictor')
     parser.add_argument('--noise', type=float, default=None)
     parser.add_argument('--gpuid', type=int, default=0)
+    parser.add_argument('--cutoff', type=float, default=None)
      
     args = parser.parse_args()
     
@@ -91,4 +92,5 @@ if __name__ == '__main__':
                 args.use_adversary,
                 resize,
                 args.noise,
-                args.gpuid)
+                args.gpuid,
+                args.cutoff)
