@@ -35,6 +35,8 @@ def standard_size_map(size):
     else:
         return 0
 
+def identity_map(size):
+    return size
 
 def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_color_map, 
                  reward_map = standard_reward_map, size_map = standard_size_map,
@@ -56,7 +58,7 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
     all_actions = []
     all_rewards = []
     counts = []
-    all_labels = {'reward':[], 'bg_color':[], 'bot/paddle/width':[]}
+    all_labels = {'reward':[], 'bg_color':[], 'bot/paddle/width':[], 'agent/paddle/width':[]}
     for game_key in iter(datafile):
         if game_keys is not None:
             if game_key not in game_keys:
@@ -67,8 +69,10 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
             param_set = game[param_hash]
             param_values = json.loads(param_set.attrs['parameter_values'])
             current_color = torch.Tensor(1).fill_(color_map(param_values['bg_color']))
-            current_size = torch.Tensor(1).fill_(size_map(param_values['agent/paddle/width']))
-#            current_size = torch.Tensor(1).fill_(size_map(param_values['bot/paddle/width']))
+
+            # No size map here?
+            current_size_agent = torch.Tensor(1).fill_(size_map(param_values['agent/paddle/width']))
+            current_size_bot = torch.Tensor(1).fill_(size_map(param_values['bot/paddle/width']))
 #             Note difference between bot/paddle/width and agent/paddle/width!
 
 #            print(current_color, current_size)
@@ -116,7 +120,8 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                 counts.append(len(states))
                 all_labels['reward'].append(torch.Tensor(len(states)).fill_(reward_map(reward_sum)))
                 all_labels['bg_color'].append(current_color.repeat(len(states)))
-                all_labels['bot/paddle/width'].append(current_size.repeat(len(states)))
+                all_labels['bot/paddle/width'].append(current_size_bot.repeat(len(states)))
+                all_labels['agent/paddle/width'].append(current_size_agent.repeat(len(states)))
 
     datafile.close()
 
@@ -124,9 +129,10 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
     states = torch.cat(all_states)
     rewards = torch.cat(all_rewards)
     actions = torch.cat(all_actions)
-    labels = {'reward':torch.cat(all_labels['reward']),
-              'bg_color':torch.cat(all_labels['bg_color']),
-              'bot/paddle/width':torch.cat(all_labels['bot/paddle/width'])}
+    labels = {k:torch.cat(all_labels[k]) for k in all_labels}
+#    labels = {'reward':torch.cat(all_labels['reward']),
+#              'bg_color':torch.cat(all_labels['bg_color']),
+#              'bot/paddle/width':torch.cat(all_labels['bot/paddle/width'])}
 
 #    print("Overall dataset", stat_grid(labels['reward'], 
 #            labels['bot/paddle/width'], labels['bg_color']))
