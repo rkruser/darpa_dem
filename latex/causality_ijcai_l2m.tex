@@ -86,174 +86,217 @@ $^2$University of Maryland
 \maketitle
 
 \begin{abstract}
-In a given learning environment, some variables are causal, and some are merely correlated with the prediction targets. Standard machine learning models make no distinction between the two, making the models less robust to domain shift, in which causal factors remain invariant but correlations change. Given background knowledge about the causal structure of the environment, we demonstrate a simple adversarial method to train a predictor that ignores non-causal information. We show results on two artificial environments.
+In a given learning environment, some variables are causal, and some are merely correlated with the prediction targets. Standard machine learning models make no distinction between the two, making the models less robust to domain shift, in which causal factors remain invariant but correlations change. Given background knowledge about the causal structure of the environment, we demonstrate a simple adversarial method to train a predictor that ignores non-causal information. %We show results on two artificial environments.
 \end{abstract}
 
-This is a test citation \cite{Oh2015}.
+%This is a test citation \cite{Oh2015}.
 
+\section{Models and Experimental Design}
 
+Using the TEF framework, we simulate Pong games, varying the background color (Red or Blue) and the paddle size of the agent relative to the opponent (large or small). Table \ref{tab:dataset_proportions} shows four datasets, consisting of 50 games each, whose frames are labeled with a 1 if the agent wins the game, and a 0 otherwise. Each column shows, for the frames from a particular set of games simulated with the fixed column parameters, the proportion of the total dataset constituted by those frames (left), and the proportion of those frames that are part of a winning game (right, bold). There are four datasets: the original D1, the ``Interventional" data corresponding to a domain shift in data proportions, and truncated versions of each of these. In the truncated versions, the latter half of each game is thrown out, so that the models are forced to distinguish the winner and loser more by looking at the fixed paddle size and color rather than particular ball position, as we are only interested in the causal effect of these factors.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+There are two models, each consisting of the same basic convolutional neural network, but one with an extra adversarial objective that forces the model to not consider color information when making its predictions. Table \ref{tab:model_performance} shows each type of model's learned category-specific winning probability predictions (averaged over data points in that category) after 50 epochs. Ideally, these numbers should match up with the bolded numbers in Table \ref{tab:dataset_proportions}.
 
 
 %%%%% Training category proportions %%%%%%%
 % Paddle size \textbackslash Background Color
-\begin{table}
+\begin{table*} % Star does renders the table across two columns.
 \centering
-\begin{tabular}{r | c | c}
- & Blue & Red \\
-\hline
-Large & 0.095 & 0.422 \\
-\hline
-Small & 0.393 & 0.090
+\begin{tabular}{r | c | c | c | c | c}
+ Dataset & Frames & Red-Large & Red-Small & Blue-Large & Blue-Small \\
+ \hline
+ %D1 & 2458 & 0.422 / 0.553 & 0.090 / 0.000 & 0.095 / 0.282 & 0.393 / 0.074 \\
+ %D1 intervention & 2557 & 0.426 / 0.605 & 0.385 / 0.000 & 0.084 / 0.594 & 0.105 / 0.000 \\
+ D1 & 2313 & 0.5275 / \textbf{0.5328} & 0.000 / 0.000 & 0.000 / 0.000 & 0.4725 / \textbf{0.1775} \\
+ D1 Intervention & 2205 & 0.000 / 0.000 & 0.3379 / \textbf{0.1624} & 0.6621 / \textbf{0.4521} & 0.000 / 0.000 \\
+ Truncated D1 & 1156 & 0.5275 / \textbf{0.5328} & 0.000 / 0.000 & 0.000 / 0.000 & 0.4725 / \textbf{0.1775} \\ 
+ Truncated D1 Intervention & 1102 & 0.000 / 0.000 & 0.3379 / \textbf{0.1624} & 0.6621 / \textbf{0.4521} & 0.000 / 0.000 \\
 \end{tabular}
-\caption{Training data category proportions among 2458 frames from 50 different games. Left column: large vs. small paddle size compared to the opponent agent. Top row: background color of the game. Generated from 20 games each with large paddle / red background and small paddle / blue background; 5 games each in the other two quadrants.}
-\label{tab:exp1_prop}
-\end{table}
+\caption{Dataset Info. Proportion of total data points (Pong frames) in category / Proportion of points in category belonging to winning games.}
+\label{tab:dataset_proportions}
+\end{table*}
+%%%%%%%%%%%%
+
+\begin{table*} % Star does renders the table across two columns.
+\centering
+\begin{tabular}{r | c | c | c | c | c}
+ Model type & Dataset & Red-Large & Red-Small & Blue-Large & Blue-Small \\
+ \hline
+% D1 & 
+% D1 intervention & 
+No adversary & D1 & 0.5263 & - & - & 0.1871 \\
+No adversary  & D1 Intervention & - & 0.2401 & 0.3243 & - \\
+No adversary  & Truncated D1 & 0.5293 & - & - & 0.1890 \\
+No adversary  & Truncated D1 Intervention & - & 0.3221 & 0.3007 & - \\
+\hline
+Adversary & D1 & 0.3892 & - & - & 0.3510 \\
+Adversary  & D1 Intervention & - & 0.4590 & 0.2926 & - \\
+Adversary  & Truncated D1 & 0.3946 & - & - & 0.3635 \\
+Adversary  & Truncated D1 Intervention & - & 0.3159 & 0.3807 & -
+\end{tabular}
+\caption{Predicted winning probabilities learned by each model on each dataset, in each category. Dashes occur where there are zero data points in the given category. Compare with the bolded numbers in Table \ref{tab:dataset_proportions}.}
+\label{tab:model_performance}
+\end{table*}
 %%%%%%%%%%%%
 
 
-%%%%% Training win proportions %%%%%%%
-% Paddle size \textbackslash Background Color
-\begin{table}
-\centering
-\begin{tabular}{r | c | c}
- & Blue & Red \\
-\hline
-Large & 0.282 & 0.553 \\
-\hline
-Small & 0.074 & 0.000
-\end{tabular}
-\caption{Training data win proportions among each combination of attributes. Each frame is annotated with the win condition of the game it is sampled from. Over half the frames containing a large paddle with red background were in a winning game. Although the background color does not affect gameplay, a very different proportion of frames with the large paddle ad blue background were in a winning game, mainly due to small sample size. Small sample size also explains why the lower right corner is zero.}
-\label{tab:exp1_win}
-\end{table}
-%%%%%%%%%%%%
-
-%%%%% Test category proportions %%%%%%%
-% Paddle size \textbackslash Background Color
-\begin{table}
-\centering
-\begin{tabular}{r | c | c}
- & Blue & Red \\
-\hline
-Large & 0.079 & 0.376 \\
-\hline
-Small & 0.465 & 0.081
-\end{tabular}
-\caption{Test data proportions among 2726 frames. Compare to Table \ref{tab:exp1_prop}}
-\label{tab:exp1_test_prop}
-\end{table}
-%%%%%%%%%%%%
 
 
-%%%%% Test win proportions %%%%%%%
-% Paddle size \textbackslash Background Color
-\begin{table}
-\centering
-\begin{tabular}{r | c | c}
- & Blue & Red \\
-\hline
-Large & 0.594 & 0.381 \\
-\hline
-Small & 0.000 & 0.000
-\end{tabular}
-\caption{Test data win proportions. Compare to Table \ref{tab:exp1_win}}
-\label{tab:exp1_test_win}
-\end{table}
-%%%%%%
-
-%%%%% Learned train proportions %%%%%%%
-% Paddle size \textbackslash Background Color
-\begin{table}
-\centering
-\begin{tabular}{r | c | c}
- & Blue & Red \\
-\hline
-Large & 0.263 & 0.556 \\
-\hline
-Small & 0.072 & 0.000
-\end{tabular}
-\caption{Average win probabilities predicted by a basic neural net trained on the training data.}
-\label{tab:exp1_model}
-\end{table}
-%%%%%%%%%%%%%%%%%%
-
-%%%%% Learned test proportions %%%%%%%
-% Paddle size \textbackslash Background Color
-\begin{table}
-\centering
-\begin{tabular}{r | c | c}
- & Blue & Red \\
-\hline
-Large & 0.277 & 0.627 \\
-\hline
-Small & 0.030 & 0.000
-\end{tabular}
-\caption{Average win probabilities predicted by a basic neural network on the test data. Note the proportions are more similar to the training data than to the actual test data proportions, as expected, since there is very little information in each frame to indicate a win besides color and paddle size; the network mainly defaults to its priors in those quadrants.}
-\label{tab:exp1_test_win}
-\end{table}
-%%%%%%%%%%%%
-
-%%%%% Intervention category proportions %%%%%%%
-% Paddle size \textbackslash Background Color
-\begin{table}
-\centering
-\begin{tabular}{r | c | c}
- & Blue & Red \\
-\hline
-Large & 0.084 & 0.426 \\
-\hline
-Small & 0.105 & 0.385
-\end{tabular}
-\caption{Intervention data category proportions among 2557 frames in an interventional dataset.}
-\label{tab:exp1_int_prop}
-\end{table}
-%%%%%%%%%%%%
 
 
-%%%%% Intrevention win proportions %%%%%%%
-% Paddle size \textbackslash Background Color
-\begin{table}
-\centering
-\begin{tabular}{r | c | c}
- & Blue & Red \\
-\hline
-Large & 0.594 & 0.605 \\
-\hline
-Small & 0.000 & 0.000
-\end{tabular}
-\caption{Intervention data win proportions.}
-\label{tab:exp1_int_win}
-\end{table}
-%%%%%%%%%%%%
 
-%%%%% Intrevention model test proportions %%%%%%%
-% Paddle size \textbackslash Background Color
-\begin{table}
-\centering
-\begin{tabular}{r | c | c}
- & Blue & Red \\
-\hline
-Large & 0.276 & 0.613 \\
-\hline
-Small & 0.051 & 0.000
-\end{tabular}
-\caption{Win probabilities as predicted by the neural network model.}
-\label{tab:exp1_int_model}
-\end{table}
-%%%%%%%%%%%%
+
+
+
+
+
+
+%%%%%% Training category proportions %%%%%%%
+%% Paddle size \textbackslash Background Color
+%\begin{table}
+%\centering
+%\begin{tabular}{r | c | c}
+% & Blue & Red \\
+%\hline
+%Large & 0.095 & 0.422 \\
+%\hline
+%Small & 0.393 & 0.090
+%\end{tabular}
+%\caption{Training data category proportions among 2458 frames from 50 different games. Left column: large vs. small paddle size compared to the opponent agent. Top row: background color of the game. Generated from 20 games each with large paddle / red background and small paddle / blue background; 5 games each in the other two quadrants.}
+%\label{tab:exp1_prop}
+%\end{table}
+%%%%%%%%%%%%%
+%
+%
+%%%%%% Training win proportions %%%%%%%
+%% Paddle size \textbackslash Background Color
+%\begin{table}
+%\centering
+%\begin{tabular}{r | c | c}
+% & Blue & Red \\
+%\hline
+%Large & 0.282 & 0.553 \\
+%\hline
+%Small & 0.074 & 0.000
+%\end{tabular}
+%\caption{Training data win proportions among each combination of attributes. Each frame is annotated with the win condition of the game it is sampled from. Over half the frames containing a large paddle with red background were in a winning game. Although the background color does not affect gameplay, a very different proportion of frames with the large paddle ad blue background were in a winning game, mainly due to small sample size. Small sample size also explains why the lower right corner is zero.}
+%\label{tab:exp1_win}
+%\end{table}
+%%%%%%%%%%%%%
+%
+%%%%%% Test category proportions %%%%%%%
+%% Paddle size \textbackslash Background Color
+%\begin{table}
+%\centering
+%\begin{tabular}{r | c | c}
+% & Blue & Red \\
+%\hline
+%Large & 0.079 & 0.376 \\
+%\hline
+%Small & 0.465 & 0.081
+%\end{tabular}
+%\caption{Test data proportions among 2726 frames. Compare to Table \ref{tab:exp1_prop}}
+%\label{tab:exp1_test_prop}
+%\end{table}
+%%%%%%%%%%%%%
+%
+%
+%%%%%% Test win proportions %%%%%%%
+%% Paddle size \textbackslash Background Color
+%\begin{table}
+%\centering
+%\begin{tabular}{r | c | c}
+% & Blue & Red \\
+%\hline
+%Large & 0.594 & 0.381 \\
+%\hline
+%Small & 0.000 & 0.000
+%\end{tabular}
+%\caption{Test data win proportions. Compare to Table \ref{tab:exp1_win}}
+%\label{tab:exp1_test_win}
+%\end{table}
+%%%%%%%
+%
+%%%%%% Learned train proportions %%%%%%%
+%% Paddle size \textbackslash Background Color
+%\begin{table}
+%\centering
+%\begin{tabular}{r | c | c}
+% & Blue & Red \\
+%\hline
+%Large & 0.263 & 0.556 \\
+%\hline
+%Small & 0.072 & 0.000
+%\end{tabular}
+%\caption{Average win probabilities predicted by a basic neural net trained on the training data.}
+%\label{tab:exp1_model}
+%\end{table}
+%%%%%%%%%%%%%%%%%%%
+%
+%%%%%% Learned test proportions %%%%%%%
+%% Paddle size \textbackslash Background Color
+%\begin{table}
+%\centering
+%\begin{tabular}{r | c | c}
+% & Blue & Red \\
+%\hline
+%Large & 0.277 & 0.627 \\
+%\hline
+%Small & 0.030 & 0.000
+%\end{tabular}
+%\caption{Average win probabilities predicted by a basic neural network on the test data. Note the proportions are more similar to the training data than to the actual test data proportions, as expected, since there is very little information in each frame to indicate a win besides color and paddle size; the network mainly defaults to its priors in those quadrants.}
+%\label{tab:exp1_test_win}
+%\end{table}
+%%%%%%%%%%%%%
+%
+%%%%%% Intervention category proportions %%%%%%%
+%% Paddle size \textbackslash Background Color
+%\begin{table}
+%\centering
+%\begin{tabular}{r | c | c}
+% & Blue & Red \\
+%\hline
+%Large & 0.084 & 0.426 \\
+%\hline
+%Small & 0.105 & 0.385
+%\end{tabular}
+%\caption{Intervention data category proportions among 2557 frames in an interventional dataset.}
+%\label{tab:exp1_int_prop}
+%\end{table}
+%%%%%%%%%%%%%
+%
+%
+%%%%%% Intrevention win proportions %%%%%%%
+%% Paddle size \textbackslash Background Color
+%\begin{table}
+%\centering
+%\begin{tabular}{r | c | c}
+% & Blue & Red \\
+%\hline
+%Large & 0.594 & 0.605 \\
+%\hline
+%Small & 0.000 & 0.000
+%\end{tabular}
+%\caption{Intervention data win proportions.}
+%\label{tab:exp1_int_win}
+%\end{table}
+%%%%%%%%%%%%%
+%
+%%%%%% Intrevention model test proportions %%%%%%%
+%% Paddle size \textbackslash Background Color
+%\begin{table}
+%\centering
+%\begin{tabular}{r | c | c}
+% & Blue & Red \\
+%\hline
+%Large & 0.276 & 0.613 \\
+%\hline
+%Small & 0.051 & 0.000
+%\end{tabular}
+%\caption{Win probabilities as predicted by the neural network model.}
+%\label{tab:exp1_int_model}
+%\end{table}
+%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Text list
@@ -298,7 +341,7 @@ Small & 0.051 & 0.000
 
 
 
-\bibliographystyle{named}
-\bibliography{causality_l2m_bib}
+%\bibliographystyle{named}
+%\bibliography{causality_l2m_bib}
 
 \end{document}

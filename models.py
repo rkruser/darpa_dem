@@ -42,7 +42,6 @@ class OurRewardPredictor(nn.Module):
             nn.Linear(256,1)
             )
 
-
 #            self.main_optimizer = optim.Adam(chain(self.features.parameters(), self.reward_classifier.parameters()), 
 #                                            lr=0.0002) #betas=(0.9, 0.999)
 
