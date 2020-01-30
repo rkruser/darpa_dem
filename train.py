@@ -15,13 +15,15 @@ import time
 
 
 def train_model(mclass, train_syllabus, test_syllabus, 
-                nepochs, model_name, use_adversary, 
+                nepochs, model_name, use_adversary, paddle_predictor, 
                 OptClass=OurOptimizer, gpu=0,
                 resize=None, noise=None, loadname=None, 
                 loadmodel=False, cutoff=None):
     exp_name = os.path.basename(os.path.splitext(train_syllabus)[0])
     model = mclass(loadmodel=loadmodel, experiment_name=exp_name, model_name=model_name,
-                                color_adversary=use_adversary, gpuid=gpu, loadname=loadname)
+                                color_adversary=use_adversary, 
+                                paddle_predictor=paddle_predictor,
+                                gpuid=gpu, loadname=loadname)
     optim = OptClass(model)
 
 #    totalset = L2M_Pytorch_Dataset(syllabus)
@@ -124,13 +126,19 @@ if __name__ == '__main__':
     parser.add_argument('--random_seed', type=int, default=1234)
     parser.add_argument('--nepochs', type=int, default=10)
     parser.add_argument('--model_name', default='PongRewardPredictor')
-    parser.add_argument('--use_adversary', action='store_true')
     parser.add_argument('--gpuid', type=int, default=0)
     parser.add_argument('--model_class', default='OurRewardPredictor')
     parser.add_argument('--noise', type=float, default=None)
     parser.add_argument('--loadname', default=None)
     parser.add_argument('--cutoff', type=float, default=None)
-    parser.add_argument('--opt_class', default='OurOptimizer')
+
+    # Adversary
+    parser.add_argument('--use_adversary', action='store_true')
+
+    # Paddles
+#    parser.add_argument('--opt_class', default='OurOptimizer')
+    parser.add_argument('--paddle_predictor', action='store_true')
+
    
     args = parser.parse_args()
     
@@ -141,7 +149,8 @@ if __name__ == '__main__':
         resize = 32
 
     OptClass = OurOptimizer
-    if args.opt_class == 'OptWithPaddleLoss':
+#    if args.opt_class == 'OptWithPaddleLoss':
+    if args.paddle_predictor:
         OptClass = OptWithPaddleLoss
         
     loadmodel = False
@@ -158,6 +167,7 @@ if __name__ == '__main__':
                 args.nepochs, 
                 args.model_name, 
                 args.use_adversary,
+                args.paddle_predictor,
                 OptClass,
                 args.gpuid,
                 resize,

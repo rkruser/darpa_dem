@@ -175,6 +175,11 @@ class OurRewardPredictor(nn.Module):
            adversaryLoss = loss['adversary_loss']
            adversaryLoss.backward()
            self.disc_optimizer.step()
+       if self.paddle_predictor:
+           self.paddle_predictor.zero_grad()
+           paddle_loss = loss['paddle_detached_loss']
+           paddle_loss.backward()
+           self.paddle_optimizer.step()
 
     def save_model(self, folder=L2DATA):
         fullfolder = os.path.join(folder, 'models', self.experiment_name)
@@ -427,12 +432,13 @@ class OptWithPaddleLoss:
         reward_acc = reward_num_correct / len(reward_actual)
 
         if paddle_predictions is not None:
-            pass #which loss to use, if cts?
+             paddle_loss = nn.functional.binary_cross_entropy_with_logits(paddle_predictions, paddle_agent_actual)
         else:
             paddle_loss = 0
 
         if paddle_detached_predictions is not None:
-            pass
+             paddle_detached_loss = nn.functional.binary_cross_entropy_with_logits(paddle_detached_predictions, paddle_agent_actual)
+             paddle_detached_rmse = None #unused for now
         else:
             paddle_detached_loss = None
             paddle_detached_rmse = None
