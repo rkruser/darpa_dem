@@ -438,9 +438,15 @@ class OptWithPaddleLoss:
 
         if paddle_detached_predictions is not None:
              paddle_detached_loss = nn.functional.binary_cross_entropy_with_logits(paddle_detached_predictions, paddle_agent_actual)
+            paddle_num_correct = ((paddle_detached_predictions > 0).int() == paddle_agent_actual.int()).sum().float()
+            paddle_acc = paddle_num_correct / len(paddle_actual)
+
              paddle_detached_rmse = None #unused for now
         else:
             paddle_detached_loss = None
+            paddle_acc = None
+            paddle_num_correct = None
+
             paddle_detached_rmse = None
 
 
@@ -468,6 +474,8 @@ class OptWithPaddleLoss:
                    'reward_num_correct': reward_num_correct,
                    'adversary_acc': adversary_acc,
                    'adversary_num_correct': adversary_num_correct,
+                   'paddle_acc': paddle_acc,
+                   'paddle_num_correct':paddle_num_correct,
                    'sumgrid': None,
                    'totalgrid': None,
                    'proportiongrid': None,

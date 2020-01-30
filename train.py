@@ -41,7 +41,8 @@ def train_model(mclass, train_syllabus, test_syllabus,
     testloader = DataLoader(testset, batch_size=64, shuffle=False, num_workers=4)
 
     meters = Meters('trainacc', 'testacc', 'trainloss', 'testloss', 'traingrid', 'testgrid',
-        'trainacc_adv', 'trainloss_adv', 'testacc_adv', 'testloss_adv')#, 'traingrid_adv', 'testgrid_adv')
+        'trainacc_adv', 'trainloss_adv', 'testacc_adv', 'testloss_adv',
+        'trainloss_paddle', 'testloss_paddle', 'trainacc_paddle', 'testacc_paddle')#, 'traingrid_adv', 'testgrid_adv')
     meters.initialize_meter('traingrid', torch.zeros(2,2), torch.zeros(2,2))
     meters.initialize_meter('testgrid', torch.zeros(2,2), torch.zeros(2,2))
 #    meters.initialize_meter('traingrid_adv') = np.zeros((2,2))
@@ -73,6 +74,10 @@ def train_model(mclass, train_syllabus, test_syllabus,
             if loss['adversary_loss'] is not None:
                 meters.update('trainloss_adv', loss['adversary_loss'].item(), batch_size)
                 meters.update('trainacc_adv', loss['adversary_num_correct'].item(), batch_size)
+            if loss['paddle_detached_loss'] is not None:
+                meters.update('trainloss_paddle', loss['paddle_detached_loss'].item(), batch_size)
+                meters.update('trainacc_paddle', loss['paddle_acc'].item(), batch_size)
+
 
         # Test
         print("  Test")
@@ -93,6 +98,10 @@ def train_model(mclass, train_syllabus, test_syllabus,
             if loss['adversary_loss'] is not None:
                 meters.update('testloss_adv', loss['adversary_loss'].item(), batch_size)
                 meters.update('testacc_adv', loss['adversary_num_correct'].item(), batch_size)
+            if loss['paddle_detached_loss'] is not None:
+                meters.update('testloss_paddle', loss['paddle_detached_loss'].item(), batch_size)
+                meters.update('testacc_paddle', loss['paddle_acc'].item(), batch_size)
+
 
         # Tensorboard logging
         writer.add_scalar('loss/main/train', meters.average('trainloss'), epoch)
