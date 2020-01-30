@@ -65,7 +65,10 @@ class OurRewardPredictor(nn.Module):
         if paddle_predictor:
             self.paddle_predictor = nn.Sequential(
                     nn.Dropout(), #?
-                    nn.Linear(256, 256),
+                    nn.Linear(256*4*4, 256),
+                    nn.ReLU(inplace=True),
+                    nn.Dropout(), #?
+                    nn.Linear(256,256),
                     nn.ReLU(inplace=True),
                     nn.Linear(256,1) #Just 1 for now, binary colors
                     )
@@ -97,7 +100,7 @@ class OurRewardPredictor(nn.Module):
         self.current_input_spaces = None
         self.current_output_spaces = None
         self.color_adversary = color_adversary
-        self.paddle_predictor = paddle_predictor
+#        self.paddle_predictor = paddle_predictor
 
         # This code creates new optimizers instead of using saved ones. Good or bad?
         self.device = torch.device("cuda:{}".format(gpuid) if torch.cuda.is_available() else "cpu")
@@ -112,7 +115,7 @@ class OurRewardPredictor(nn.Module):
 
         if self.paddle_predictor:
             self.paddle_predictor = self.paddle_predictor.to(self.device)
-            self.paddle_optimizer = optim.Adam(self.paddle_predictor.parameters()), lr=0.0002)
+            self.paddle_optimizer = optim.Adam(self.paddle_predictor.parameters(), lr=0.0002)
 
 
 
@@ -167,19 +170,27 @@ class OurRewardPredictor(nn.Module):
     def update(self, loss):
        self.features.zero_grad()
        self.reward_classifier.zero_grad()
+       
+       ####
+       self.paddle_predictor.zero_grad()
+
        mainLoss = loss['reward_loss'] #includes adversarial color loss
        mainLoss.backward()
        self.main_optimizer.step()
+
+       ####
+       self.paddle_optimizer.step()
+       
        if self.color_adversary:
            self.color_discriminator.zero_grad()
            adversaryLoss = loss['adversary_loss']
            adversaryLoss.backward()
            self.disc_optimizer.step()
-       if self.paddle_predictor:
-           self.paddle_predictor.zero_grad()
-           paddle_loss = loss['paddle_detached_loss']
-           paddle_loss.backward()
-           self.paddle_optimizer.step()
+#       if self.paddle_predictor:
+#           self.paddle_predictor.zero_grad()
+#           paddle_loss = loss['paddle_detached_loss']
+#           paddle_loss.backward()
+#           self.paddle_optimizer.step()
 
     def save_model(self, folder=L2DATA):
         fullfolder = os.path.join(folder, 'models', self.experiment_name)
@@ -280,7 +291,7 @@ class OurSimpleRewardPredictor(nn.Module):
 
         if self.paddle_predictor:
             self.paddle_predictor = self.paddle_predictor.to(self.device)
-            self.paddle_optimizer = optim.Adam(self.paddle_predictor.parameters()), lr=0.0002)
+            self.paddle_optimizer = optim.Adam(self.paddle_predictor.parameters(), lr=0.0002)
            
 
 
@@ -437,11 +448,11 @@ class OptWithPaddleLoss:
             paddle_loss = 0
 
         if paddle_detached_predictions is not None:
-             paddle_detached_loss = nn.functional.binary_cross_entropy_with_logits(paddle_detached_predictions, paddle_agent_actual)
+            paddle_detached_loss = nn.functional.binary_cross_entropy_with_logits(paddle_detached_predictions, paddle_agent_actual)
             paddle_num_correct = ((paddle_detached_predictions > 0).int() == paddle_agent_actual.int()).sum().float()
-            paddle_acc = paddle_num_correct / len(paddle_actual)
+            paddle_acc = paddle_num_correct / len(paddle_agent_actual)
 
-             paddle_detached_rmse = None #unused for now
+            paddle_detached_rmse = None #unused for now
         else:
             paddle_detached_loss = None
             paddle_acc = None

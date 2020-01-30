@@ -144,15 +144,17 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
     test_inds = inds[train_size:]
     train_set = L2M_Pytorch_Dataset(train_size, states[train_inds], 
                                     rewards[train_inds], actions[train_inds],
-                                    {'reward':labels['reward'][train_inds],
-                                     'bg_color':labels['bg_color'][train_inds],
-                                     'bot/paddle/width':labels['bot/paddle/width'][train_inds]})
+                                    {k:labels[k][train_inds] for k in labels})
+#                                    {'reward':labels['reward'][train_inds],
+#                                     'bg_color':labels['bg_color'][train_inds],
+#                                     'bot/paddle/width':labels['bot/paddle/width'][train_inds]})
 #                                     noise=noise)
     test_set = L2M_Pytorch_Dataset(test_size, states[test_inds], 
                                     rewards[test_inds], actions[test_inds],
-                                    {'reward':labels['reward'][test_inds],
-                                     'bg_color':labels['bg_color'][test_inds],
-                                     'bot/paddle/width':labels['bot/paddle/width'][test_inds]})
+                                    {k:labels[k][test_inds] for k in labels})
+#                                    {'reward':labels['reward'][test_inds],
+#                                     'bg_color':labels['bg_color'][test_inds],
+#                                     'bot/paddle/width':labels['bot/paddle/width'][test_inds]})
 #                                     noise=noise)
 
 #    print("\nTrain stats")
@@ -205,9 +207,10 @@ class L2M_Pytorch_Dataset(Dataset):
 
     def __getitem__(self, index):
 #        return self.states[index], self.labels['reward'][index], self.labels['bg_color'][index], self.labels['bot/paddle/width'][index]
-        labels = { 'reward': self.labels['reward'][index], 
-                                    'bg_color': self.labels['bg_color'][index], 
-                                    'bot/paddle/width': self.labels['bot/paddle/width'][index] }
+        labels = {k: self.labels[k][index] for k in self.labels}
+#        labels = { 'reward': self.labels['reward'][index], 
+#                                    'bg_color': self.labels['bg_color'][index], 
+#                                    'bot/paddle/width': self.labels['bot/paddle/width'][index] }
 #        if self.noise is None:
         return self.states[index], labels
 #        else:
@@ -215,7 +218,7 @@ class L2M_Pytorch_Dataset(Dataset):
 #            return im+self.noise*torch.randn(im.size()), labels
 
     def statistics(self):
-        return stat_grid(self.labels['reward'], self.labels['bot/paddle/width'], self.labels['bg_color'])
+        return stat_grid(self.labels['reward'], self.labels['agent/paddle/width'], self.labels['bg_color'])
 
     def print_statistics(self):
         counts, totals, proportions = self.statistics()

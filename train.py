@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 import learnkit
 from learnkit.utils import module_relative_file
 
-from models import OurRewardPredictor, OurSimpleRewardPredictor, OurOptimizer, Meters
+from models import OurRewardPredictor, OurSimpleRewardPredictor, OurOptimizer, Meters, OptWithPaddleLoss
 from dataloader import L2DATA, Construct_L2M_Dataset
 
 from torch.utils.tensorboard import SummaryWriter
@@ -70,7 +70,8 @@ def train_model(mclass, train_syllabus, test_syllabus,
             # Logging
             meters.update('trainloss', loss['reward_loss'].item(), batch_size)
             meters.update('trainacc', loss['reward_num_correct'].item(), batch_size)
-            meters.update('traingrid', loss['sumgrid'], loss['totalgrid'])
+            if loss['sumgrid'] is not None:
+                meters.update('traingrid', loss['sumgrid'], loss['totalgrid'])
             if loss['adversary_loss'] is not None:
                 meters.update('trainloss_adv', loss['adversary_loss'].item(), batch_size)
                 meters.update('trainacc_adv', loss['adversary_num_correct'].item(), batch_size)
@@ -94,7 +95,8 @@ def train_model(mclass, train_syllabus, test_syllabus,
             # Logging
             meters.update('testloss', loss['reward_loss'].item(), batch_size)
             meters.update('testacc', loss['reward_num_correct'].item(), batch_size)
-            meters.update('testgrid', loss['sumgrid'], loss['totalgrid'])
+            if loss['sumgrid'] is not None:
+                meters.update('testgrid', loss['sumgrid'], loss['totalgrid'])
             if loss['adversary_loss'] is not None:
                 meters.update('testloss_adv', loss['adversary_loss'].item(), batch_size)
                 meters.update('testacc_adv', loss['adversary_num_correct'].item(), batch_size)
@@ -121,6 +123,12 @@ def train_model(mclass, train_syllabus, test_syllabus,
         writer.add_scalar('accuracy/adv/train', meters.average('trainacc_adv'), epoch)
         writer.add_scalar('loss/adv/test', meters.average('testloss_adv'), epoch)
         writer.add_scalar('accuracy/adv/test', meters.average('testacc_adv'), epoch)
+
+        writer.add_scalar('loss/paddle/train', meters.average('trainloss_paddle'), epoch)
+        writer.add_scalar('accuracy/paddle/train', meters.average('trainacc_paddle'), epoch)
+        writer.add_scalar('loss/paddle/test', meters.average('testloss_paddle'), epoch)
+        writer.add_scalar('accuracy/paddle/test', meters.average('testacc_paddle'), epoch)
+
 
             
 
