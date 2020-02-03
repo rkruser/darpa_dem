@@ -110,6 +110,13 @@ Causal inference is the study of counterfactual distributions. Counterfactuals a
 	
 In general, it is not possible to infer causal relations without the ability to interact with the environment and perform experiments. This is, in short, because probability distributions over counterfactual data are underdetermined by observed data - multiple transition models could explain the observed data - and moreover, interventions could potentially have different effects depending on how they are done (e.g., running a study in a lab versus in the field where there may be different background dynamics). However, it is possible, under certain conditions, to infer causal effects from purely observational data. These conditions include either sufficiently detailed background knowledge about the domain from which the data was sampled \cite{Pearl2009} \cite{Rosenbaum1983}, or restricted formalizations such as Granger causality \cite{granger1969investigating} \cite{granger1980testing}. Under such conditions, it is possible to use techniques such as propensity score matching \cite{Rosenbaum1983}, inverse probability weighting [cite this] or directly conditioning on confounding to ascertain causal effects.
 
+
+
+% Draw heavily on the BeamNG workshop submission's intro here for text and citations and such.
+
+
+
+
 \textbf{Relation to transfer learning}
 
 
@@ -127,6 +134,9 @@ In general, it is not possible to infer causal relations without the ability to 
 
 
 
+
+
+% Write this in parallel with coding / cleaning up code
 \section{Models and Experiments}
 
 %Using the TEF framework, we simulate Pong games, varying the background color (Red or Blue) and the paddle size of the agent relative to the opponent (large or small). Table \ref{tab:dataset_proportions} shows four datasets, consisting of 50 games each, whose frames are labeled with a 1 if the agent wins the game, and a 0 otherwise. Each column shows, for the frames from a particular set of games simulated with the fixed column parameters, the proportion of the total dataset constituted by those frames (left), and the proportion of those frames that are part of a winning game (right, bold). There are four datasets: the original D1, the ``Interventional" data corresponding to a domain shift in data proportions, and truncated versions of each of these. In the truncated versions, the latter half of each game is thrown out, so that the models are forced to distinguish the winner and loser more by looking at the fixed paddle size and color rather than particular ball position, as we are only interested in the causal effect of these factors.
@@ -197,7 +207,7 @@ Adversary  & Truncated D1 Intervention & - & 0.3159 & 0.3807 & -
 
 
 
-
+% Acknowledge Darpa L2M
 \section{Acknowledgement}
 
 
