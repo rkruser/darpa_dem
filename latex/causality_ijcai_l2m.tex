@@ -96,15 +96,38 @@ In a given learning environment, some variables are causal, and some are merely 
 %This is a test citation \cite{Oh2015}.
 
 \section{Introduction}
+The importance of embedding causal reasoning into machine learning has become increasingly noticed in recent years. Most existing machine learning algorithms establish correlation only; this is usually enough for prediction, but it is not enough for other kinds of reasoning, such as counterfactual reasoning \cite{pearl2018theoretical} \cite{Pearl2009}. Furthermore, causal reasoning is, in principle, both more \emph{efficient} and more \emph{generalizable} than reasoning based on correlation only: causal rules presumably hold between different domain-shifted datasets of the same kind even when correlations change \cite{Bottou2019presentation}. 
 
+We conduct a preliminary investigation into training a model using background knowledge of causality in a simple game environment - in this case, Pong. Suppose that two factors can vary - the size of the player's Pong paddle relative to the opponent's, and the background color. Since the transition model in Pong is fully known, we know \emph{a priori} that background color will not affect the gameplay, but paddle size will. (If we did not know this \emph{a priori}, we could figure it out by performing simple experiments in which we intervene randomly on these attributes, then observe the outcomes). Suppose also that we have a biased dataset in which both color and paddle size correlate with outcome. Can we train a model on this biased dataset to ignore the non-causal variable and pay attention only to the causal one?
+
+Many real-world problems come with similar kinds of background knowledge that could potentially be exploited in this way; in the causal literature, this knowledge is explicitly represented by structural causal models \cite{Pearl2009} \cite{pearl2009causalitybook}. For example, we know that lighting conditions do not affect the laws of motion, yet datasets are likely to be biased towards the daytime, potentially introducing spurious correlations [find a better example].
+
+We propose that this problem could be solved with a simple adversarial objective. We train a network to predict the likelihood of a certain game outcome given a single frame (so that the probability of winning is predicted based only on fixed game attributes); in addition, we add a secondary predictor late in the network that predicts the value of the non-causal variable (in this case, background color). The objective function of the secondary predictor is to minimize the error in its prediction of background color. The objective function of the outcome predictor is to minimize error in its win-probability predictions while maximizing error in the secondary color predictor. This forces the primary network to make its prediction based only on factors unrelated to color, hopefully removing the spurious correlation between color and outcome. [Cite GANs and data-privacy learning here?]
 
 
 \section{Background}
+Causal inference is the study of counterfactual distributions. Counterfactuals are questions of the form ``What would happen if X?", or ``What would have happened had X been different?" \cite{pearl2018theoretical}. Of central importance is the idea of an ``intervention": a surgical change, whether actually performed or imagined, in the deeper transition model (possibly with hidden states) that generates the observed data, such that all but a small portion of the transition function remains the same. For a concrete example: observation is noticing that wet grass correlates with rain; intervention is wetting the grass with a hose to see if rain starts falling, thus answering the counterfactual question ``Would wetting the grass bring the rain?" (This intervention is surgical in the sense that wetting the grass does not have arbitrarily widespread effects, such as changing the physics of the atmosphere. In general, it is never \emph{certain} whether or not an intervention was truly surgical or local in this sense, but steps like randomized controls can get close).
+	
+In general, it is not possible to infer causal relations without the ability to interact with the environment and perform experiments. This is, in short, because probability distributions over counterfactual data are underdetermined by observed data - multiple transition models could explain the observed data - and moreover, interventions could potentially have different effects depending on how they are done (e.g., running a study in a lab versus in the field where there may be different background dynamics). However, it is possible, under certain conditions, to infer causal effects from purely observational data. These conditions include either sufficiently detailed background knowledge about the domain from which the data was sampled \cite{Pearl2009} \cite{Rosenbaum1983}, or restricted formalizations such as Granger causality \cite{granger1969investigating} \cite{granger1980testing}. Under such conditions, it is possible to use techniques such as propensity score matching \cite{Rosenbaum1983}, inverse probability weighting [cite this] or directly conditioning on confounding to ascertain causal effects.
+
+\textbf{Relation to transfer learning}
+
+
+
+\textbf{Relation to Reinforcement learning}
 
 
 
 
-\section{Models and Experimental Design}
+\textbf{Relation to predictive models}
+
+
+
+\textbf{Background of adversarial scrubbing or something}
+
+
+
+\section{Models and Experiments}
 
 %Using the TEF framework, we simulate Pong games, varying the background color (Red or Blue) and the paddle size of the agent relative to the opponent (large or small). Table \ref{tab:dataset_proportions} shows four datasets, consisting of 50 games each, whose frames are labeled with a 1 if the agent wins the game, and a 0 otherwise. Each column shows, for the frames from a particular set of games simulated with the fixed column parameters, the proportion of the total dataset constituted by those frames (left), and the proportion of those frames that are part of a winning game (right, bold). There are four datasets: the original D1, the ``Interventional" data corresponding to a domain shift in data proportions, and truncated versions of each of these. In the truncated versions, the latter half of each game is thrown out, so that the models are forced to distinguish the winner and loser more by looking at the fixed paddle size and color rather than particular ball position, as we are only interested in the causal effect of these factors.
 
@@ -175,6 +198,7 @@ Adversary  & Truncated D1 Intervention & - & 0.3159 & 0.3807 & -
 
 
 
+\section{Acknowledgement}
 
 
 
@@ -187,8 +211,7 @@ Adversary  & Truncated D1 Intervention & - & 0.3159 & 0.3807 & -
 
 
 
-
-\nocite{*}
+%\nocite{*}
 \bibliographystyle{named}
 \bibliography{causality_l2m_bib}
 
