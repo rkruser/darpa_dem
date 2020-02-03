@@ -10,6 +10,10 @@
 % The file ijcai20.sty is NOT the same than previous years'
 \usepackage{ijcai20}
 
+% Fix some error with the bibtex
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+
 % Use the postscript times font!
 \usepackage{times}
 \usepackage{soul}
@@ -91,11 +95,20 @@ In a given learning environment, some variables are causal, and some are merely 
 
 %This is a test citation \cite{Oh2015}.
 
+\section{Introduction}
+
+
+
+\section{Background}
+
+
+
+
 \section{Models and Experimental Design}
 
-Using the TEF framework, we simulate Pong games, varying the background color (Red or Blue) and the paddle size of the agent relative to the opponent (large or small). Table \ref{tab:dataset_proportions} shows four datasets, consisting of 50 games each, whose frames are labeled with a 1 if the agent wins the game, and a 0 otherwise. Each column shows, for the frames from a particular set of games simulated with the fixed column parameters, the proportion of the total dataset constituted by those frames (left), and the proportion of those frames that are part of a winning game (right, bold). There are four datasets: the original D1, the ``Interventional" data corresponding to a domain shift in data proportions, and truncated versions of each of these. In the truncated versions, the latter half of each game is thrown out, so that the models are forced to distinguish the winner and loser more by looking at the fixed paddle size and color rather than particular ball position, as we are only interested in the causal effect of these factors.
+%Using the TEF framework, we simulate Pong games, varying the background color (Red or Blue) and the paddle size of the agent relative to the opponent (large or small). Table \ref{tab:dataset_proportions} shows four datasets, consisting of 50 games each, whose frames are labeled with a 1 if the agent wins the game, and a 0 otherwise. Each column shows, for the frames from a particular set of games simulated with the fixed column parameters, the proportion of the total dataset constituted by those frames (left), and the proportion of those frames that are part of a winning game (right, bold). There are four datasets: the original D1, the ``Interventional" data corresponding to a domain shift in data proportions, and truncated versions of each of these. In the truncated versions, the latter half of each game is thrown out, so that the models are forced to distinguish the winner and loser more by looking at the fixed paddle size and color rather than particular ball position, as we are only interested in the causal effect of these factors.
 
-There are two models, each consisting of the same basic convolutional neural network, but one with an extra adversarial objective that forces the model to not consider color information when making its predictions. Table \ref{tab:model_performance} shows each type of model's learned category-specific winning probability predictions (averaged over data points in that category) after 50 epochs. Ideally, these numbers should match up with the bolded numbers in Table \ref{tab:dataset_proportions}.
+%There are two models, each consisting of the same basic convolutional neural network, but one with an extra adversarial objective that forces the model to not consider color information when making its predictions. Table \ref{tab:model_performance} shows each type of model's learned category-specific winning probability predictions (averaged over data points in that category) after 50 epochs. Ideally, these numbers should match up with the bolded numbers in Table \ref{tab:dataset_proportions}.
 
 
 %%%%% Training category proportions %%%%%%%
@@ -141,11 +154,45 @@ Adversary  & Truncated D1 Intervention & - & 0.3159 & 0.3807 & -
 
 
 
+\section{Results}
 
 
 
 
 
+
+
+
+
+
+\section{Conclusion}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\nocite{*}
+\bibliographystyle{named}
+\bibliography{causality_l2m_bib}
+
+\end{document}
 
 
 
@@ -321,27 +368,3 @@ Adversary  & Truncated D1 Intervention & - & 0.3159 & 0.3807 & -
 % 
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-%\bibliographystyle{named}
-%\bibliography{causality_l2m_bib}
-
-\end{document}

@@ -1,5 +1,166 @@
 Causality darpa l2m bibliography
 
+Suggested order of importance:
+Pearl2009, Pearl2009causalitybook, Bengio2019, Dasgupta2019, Rojas-Carulla2015**, Parascandolo2017**, Oh2015, Suter2018, Lotter2016 (Babaeizadeh2017, Watter2015), Lange2012
+
+(Go back and note citation counts of above)
+
+From spring 2019 notebook
+============================
+@article{Bengio2019,
+abstract = {We propose to meta-learn causal structures based on how fast a learner adapts to new distributions arising from sparse distributional changes, e.g. due to interventions, actions of agents and other sources of non-stationarities. We show that under this assumption, the correct causal structural choices lead to faster adaptation to modified distributions because the changes are concentrated in one or just a few mechanisms when the learned knowledge is modularized appropriately. This leads to sparse expected gradients and a lower effective number of degrees of freedom needing to be relearned while adapting to the change. It motivates using the speed of adaptation to a modified distribution as a meta-learning objective. We demonstrate how this can be used to determine the cause-effect relationship between two observed variables. The distributional changes do not need to correspond to standard interventions (clamping a variable), and the learner has no direct knowledge of these interventions. We show that causal structures can be parameterized via continuous variables and learned end-to-end. We then explore how these ideas could be used to also learn an encoder that would map low-level observed variables to unobserved causal variables leading to faster adaptation out-of-distribution, learning a representation space where one can satisfy the assumptions of independent mechanisms and of small and sparse changes in these mechanisms due to actions and non-stationarities.},
+archivePrefix = {arXiv},
+arxivId = {1901.10912},
+author = {Bengio, Yoshua and Deleu, Tristan and Rahaman, Nasim and Ke, Rosemary and Lachapelle, S{\'{e}}bastien and Bilaniuk, Olexa and Goyal, Anirudh and Pal, Christopher},
+eprint = {1901.10912},
+file = {:scratch0/resources/papers/causality/meta{\_}transfer.pdf:pdf},
+pages = {1--26},
+title = {{A Meta-Transfer Objective for Learning to Disentangle Causal Mechanisms}},
+url = {http://arxiv.org/abs/1901.10912},
+year = {2019}
+}
+
+@article{Dasgupta2019,
+abstract = {Discovering and exploiting the causal structure in the environment is a crucial challenge for intelligent agents. Here we explore whether causal reasoning can emerge via meta-reinforcement learning. We train a recurrent network with model-free reinforcement learning to solve a range of problems that each contain causal structure. We find that the trained agent can perform causal reasoning in novel situations in order to obtain rewards. The agent can select informative interventions, draw causal inferences from observational data, and make counterfactual predictions. Although established formal causal reasoning algorithms also exist, in this paper we show that such reasoning can arise from model-free reinforcement learning, and suggest that causal reasoning in complex settings may benefit from the more end-to-end learning-based approaches presented here. This work also offers new strategies for structured exploration in reinforcement learning, by providing agents with the ability to perform -- and interpret -- experiments.},
+archivePrefix = {arXiv},
+arxivId = {1901.08162},
+author = {Dasgupta, Ishita and Wang, Jane and Chiappa, Silvia and Mitrovic, Jovana and Ortega, Pedro and Raposo, David and Hughes, Edward and Battaglia, Peter and Botvinick, Matthew and Kurth-Nelson, Zeb},
+eprint = {1901.08162},
+file = {:scratch0/resources/papers/causality/causal{\_}from{\_}meta{\_}rl.pdf:pdf},
+title = {{Causal Reasoning from Meta-reinforcement Learning}},
+url = {http://arxiv.org/abs/1901.08162},
+year = {2019}
+}
+
+@article{Rojas-Carulla2015,
+abstract = {Methods of transfer learning try to combine knowledge from several related tasks (or domains) to improve performance on a test task. Inspired by causal methodology, we relax the usual covariate shift assumption and assume that it holds true for a subset of predictor variables: the conditional distribution of the target variable given this subset of predictors is invariant over all tasks. We show how this assumption can be motivated from ideas in the field of causality. We focus on the problem of Domain Generalization, in which no examples from the test task are observed. We prove that in an adversarial setting using this subset for prediction is optimal in Domain Generalization; we further provide examples, in which the tasks are sufficiently diverse and the estimator therefore outperforms pooling the data, even on average. If examples from the test task are available, we also provide a method to transfer knowledge from the training tasks and exploit all available features for prediction. However, we provide no guarantees for this method. We introduce a practical method which allows for automatic inference of the above subset and provide corresponding code. We present results on synthetic data sets and a gene deletion data set.},
+archivePrefix = {arXiv},
+arxivId = {1507.05333},
+author = {Rojas-Carulla, Mateo and Sch{\"{o}}lkopf, Bernhard and Turner, Richard and Peters, Jonas},
+eprint = {1507.05333},
+file = {:scratch0/resources/papers/causality/p1309-rojas-carulla.pdf:pdf},
+keywords = {causality,do-,domain adaptation,main generalization,multi-task learning,transfer learning},
+pages = {1--34},
+title = {{Invariant Models for Causal Transfer Learning}},
+url = {http://arxiv.org/abs/1507.05333},
+volume = {19},
+year = {2015}
+}
+
+@article{Parascandolo2017,
+abstract = {Statistical learning relies upon data sampled from a distribution, and we usually do not care what actually generated it in the first place. From the point of view of causal modeling, the structure of each distribution is induced by physical mechanisms that give rise to dependences between observables. Mechanisms, however, can be meaningful autonomous modules of generative models that make sense beyond a particular entailed data distribution, lending themselves to transfer between problems. We develop an algorithm to recover a set of independent (inverse) mechanisms from a set of transformed data points. The approach is unsupervised and based on a set of experts that compete for data generated by the mechanisms, driving specialization. We analyze the proposed method in a series of experiments on image data. Each expert learns to map a subset of the transformed data back to a reference distribution. The learned mechanisms generalize to novel domains. We discuss implications for transfer learning and links to recent trends in generative modeling.},
+archivePrefix = {arXiv},
+arxivId = {1712.00961},
+author = {Parascandolo, Giambattista and Kilbertus, Niki and Rojas-Carulla, Mateo and Sch{\"{o}}lkopf, Bernhard},
+eprint = {1712.00961},
+file = {:scratch0/resources/papers/causality/independent{\_}causal.pdf:pdf},
+number = {1},
+title = {{Learning Independent Causal Mechanisms}},
+url = {http://arxiv.org/abs/1712.00961},
+year = {2017}
+}
+
+@article{Suter2018,
+abstract = {The ability to learn disentangled representations that split underlying sources of variation in high dimensional, unstructured data is of central importance for data efficient and robust use of neural networks. Various approaches aiming towards this goal have been proposed in the recent time -- validating existing work is hence a crucial task to guide further development. Previous validation methods focused on shared information between generative factors and learned features. The effects of rare events or cumulative influences from multiple factors on encodings, however, remain uncaptured. Our experiments show that this already becomes noticeable in a simple, noise free dataset. This is why we introduce the interventional robustness score, which provides a quantitative evaluation of robustness in learned representations with respect to interventions on generative factors and changing nuisance factors. We show how this score can be estimated from labeled observational data, that may be confounded, and further provide an efficient algorithm that scales linearly in the dataset size. The benefits of our causally motivated framework are illustrated in extensive experiments.},
+archivePrefix = {arXiv},
+arxivId = {1811.00007},
+author = {Suter, Raphael and Miladinovi{\'{c}}, Đorđe and Bauer, Stefan and Sch{\"{o}}lkopf, Bernhard},
+eprint = {1811.00007},
+file = {:scratch0/resources/papers/causality/interventional{\_}robustness.pdf:pdf},
+keywords = {causal-,disentanglement,representation learning,variational auto-encoders},
+pages = {1--34},
+title = {{Interventional Robustness of Deep Latent Variable Models}},
+url = {http://arxiv.org/abs/1811.00007},
+year = {2018}
+}
+
+@article{Veitch2019,
+abstract = {We consider causal inference in the presence of unobserved confounding. In particular, we study the case where a proxy is available for the confounder but the proxy has non-iid structure. As one example, the link structure of a social network carries information about its members. As another, the text of a document collection carries information about their meanings. In both these settings, we show how to effectively use the proxy to do causal inference. The main idea is to reduce the causal estimation problem to a semi-supervised prediction of both the treatments and outcomes. Networks and text both admit high-quality embedding models that can be used for this semi-supervised prediction. Our method yields valid inferences under suitable (weak) conditions on the quality of the predictive model. We validate the method with experiments on a semi-synthetic social network dataset. We demonstrate the method by estimating the causal effect of properties of computer science submissions on whether they are accepted at a conference.},
+archivePrefix = {arXiv},
+arxivId = {1902.04114},
+author = {Veitch, Victor and Wang, Yixin and Blei, David M.},
+eprint = {1902.04114},
+file = {:scratch0/resources/papers/causality/embeddings{\_}correct{\_}for{\_}confounding.pdf:pdf},
+pages = {1--20},
+title = {{Using Embeddings to Correct for Unobserved Confounding}},
+url = {http://arxiv.org/abs/1902.04114},
+year = {2019}
+}
+
+@book{Sutton2018,
+author = {Sutton, Richard S. and Barto, Andrew G.},
+edition = {Second},
+isbn = {9780262039246},
+publisher = {The MIT Press},
+title = {{Reinforcement Learning: An Introduction}},
+year = {2018}
+}
+==============================
+
+From summer 2019 notebook (largely about video prediction)
+============================
+@book{pearl2009causalitybook,
+address = {New York, NY},
+author = {Pearl, Judea},
+edition = {Second},
+keywords = {causal inference,causality},
+mendeley-tags = {causal inference,causality},
+publisher = {Cambridge University Press},
+title = {{Causality: Models, Reasoning, and Inference}},
+year = {2009}
+}
+
+@article{Finn2016,
+abstract = {A core challenge for an agent learning to interact with the world is to predict how its actions affect objects in its environment. Many existing methods for learning the dynamics of physical interactions require labeled object information. However, to scale real-world interaction learning to a variety of scenes and objects, acquiring labeled data becomes increasingly impractical. To learn about physical object motion without labels, we develop an action-conditioned video prediction model that explicitly models pixel motion, by predicting a distribution over pixel motion from previous frames. Because our model explicitly predicts motion, it is partially invariant to object appearance, enabling it to generalize to previously unseen objects. To explore video prediction for real-world interactive agents, we also introduce a dataset of 59,000 robot interactions involving pushing motions, including a test set with novel objects. In this dataset, accurate prediction of videos conditioned on the robot's future actions amounts to learning a "visual imagination" of different futures based on different courses of action. Our experiments show that our proposed method produces more accurate video predictions both quantitatively and qualitatively, when compared to prior methods.},
+archivePrefix = {arXiv},
+arxivId = {1605.07157},
+author = {Finn, Chelsea and Goodfellow, Ian and Levine, Sergey},
+eprint = {1605.07157},
+file = {:scratch0/resources/papers/uncategorized/unsupervised{\_}physical{\_}interaction.pdf:pdf},
+title = {{Unsupervised Learning for Physical Interaction through Video Prediction}},
+url = {http://arxiv.org/abs/1605.07157},
+year = {2016}
+}
+
+@article{Walker2014,
+abstract = {In this paper we present a conceptually simple but surprisingly powerful method for visual prediction which combines the effectiveness of mid-level visual elements with temporal modeling. Our framework can be learned in a completely unsupervised manner from a large collection of videos. However, more importantly, because our approach models the prediction framework on these mid-level elements, we can not only predict the possible motion in the scene but also predict visual appearances - how are appearances going to change with time. This yields a visual "hallucination" of probable events on top of the scene. We show that our method is able to accurately predict and visualize simple future events, we also show that our approach is comparable to supervised methods for event prediction.},
+author = {Walker, Jacob and Gupta, Abhinav and Hebert, Martial},
+doi = {10.1109/CVPR.2014.416},
+file = {:scratch0/resources/papers/uncategorized/egpaper{\_}final.pdf:pdf},
+isbn = {9781479951178},
+issn = {10636919},
+journal = {Proceedings of the IEEE Computer Society Conference on Computer Vision and Pattern Recognition},
+keywords = {Activity Forecasting,Prediction},
+pages = {3302--3309},
+title = {{Patch to the future: Unsupervised visual prediction}},
+year = {2014}
+}
+
+@article{Babaeizadeh2017,
+abstract = {Predicting the future in real-world settings, particularly from raw sensory observations such as images, is exceptionally challenging. Real-world events can be stochastic and unpredictable, and the high dimensionality and complexity of natural images requires the predictive model to build an intricate understanding of the natural world. Many existing methods tackle this problem by making simplifying assumptions about the environment. One common assumption is that the outcome is deterministic and there is only one plausible future. This can lead to low-quality predictions in real-world settings with stochastic dynamics. In this paper, we develop a stochastic variational video prediction (SV2P) method that predicts a different possible future for each sample of its latent variables. To the best of our knowledge, our model is the first to provide effective stochastic multi-frame prediction for real-world video. We demonstrate the capability of the proposed method in predicting detailed future frames of videos on multiple real-world datasets, both action-free and action-conditioned. We find that our proposed method produces substantially improved video predictions when compared to the same model without stochasticity, and to other stochastic video prediction methods. Our SV2P implementation will be open sourced upon publication.},
+archivePrefix = {arXiv},
+arxivId = {1710.11252},
+author = {Babaeizadeh, Mohammad and Finn, Chelsea and Erhan, Dumitru and Campbell, Roy H. and Levine, Sergey},
+eprint = {1710.11252},
+file = {:scratch0/resources/papers/uncategorized/variational{\_}video{\_}prediction.pdf:pdf},
+title = {{Stochastic Variational Video Prediction}},
+url = {http://arxiv.org/abs/1710.11252},
+year = {2017}
+}
+
+@article{Lotter2016,
+abstract = {While great strides have been made in using deep learning algorithms to solve supervised learning tasks, the problem of unsupervised learning - leveraging unlabeled examples to learn about the structure of a domain - remains a difficult unsolved challenge. Here, we explore prediction of future frames in a video sequence as an unsupervised learning rule for learning about the structure of the visual world. We describe a predictive neural network ("PredNet") architecture that is inspired by the concept of "predictive coding" from the neuroscience literature. These networks learn to predict future frames in a video sequence, with each layer in the network making local predictions and only forwarding deviations from those predictions to subsequent network layers. We show that these networks are able to robustly learn to predict the movement of synthetic (rendered) objects, and that in doing so, the networks learn internal representations that are useful for decoding latent object parameters (e.g. pose) that support object recognition with fewer training views. We also show that these networks can scale to complex natural image streams (car-mounted camera videos), capturing key aspects of both egocentric movement and the movement of objects in the visual scene, and the representation learned in this setting is useful for estimating the steering angle. Altogether, these results suggest that prediction represents a powerful framework for unsupervised learning, allowing for implicit learning of object and scene structure.},
+archivePrefix = {arXiv},
+arxivId = {1605.08104},
+author = {Lotter, William and Kreiman, Gabriel and Cox, David},
+eprint = {1605.08104},
+file = {:scratch0/resources/papers/uncategorized/deep{\_}predictive{\_}coding.pdf:pdf},
+pages = {1--18},
+title = {{Deep Predictive Coding Networks for Video Prediction and Unsupervised Learning}},
+url = {http://arxiv.org/abs/1605.08104},
+year = {2016}
+}
+
 @article{Oh2015,
 abstract = {Motivated by vision-based reinforcement learning (RL) problems, in particular Atari games from the recent benchmark Aracade Learning Environment (ALE), we consider spatio-temporal prediction problems where future (image-)frames are dependent on control variables or actions as well as previous frames. While not composed of natural scenes, frames in Atari games are high-dimensional in size, can involve tens of objects with one or more objects being controlled by the actions directly and many other objects being influenced indirectly, can involve entry and departure of objects, and can involve deep partial observability. We propose and evaluate two deep neural network architectures that consist of encoding, action-conditional transformation, and decoding layers based on convolutional neural networks and recurrent neural networks. Experimental results show that the proposed architectures are able to generate visually-realistic frames that are also useful for control over approximately 100-step action-conditional futures in some games. To the best of our knowledge, this paper is the first to make and evaluate long-term predictions on high-dimensional video conditioned by control inputs.},
 archivePrefix = {arXiv},
@@ -12,4 +173,65 @@ pages = {1--9},
 title = {{Action-Conditional Video Prediction using Deep Networks in Atari Games}},
 url = {http://arxiv.org/abs/1507.08750},
 year = {2015}
+}
+
+@article{Brubaker2010,
+abstract = {Motion and interaction with the environment are fundamentally intertwined. Few people-tracking algorithms exploit such interactions, and those that do assume that surface geometry and dynamics are given. This paper concerns the converse problem, i.e., the inference of contact and environment properties from motion. For 3D human motion, with a 12-segment articulated body model, we show how one can estimate the forces acting on the body in terms of internal forces (joint torques), gravity, and the parameters of a contact model (e.g., the geometry and dynamics of a spring-based model). This is tested on motion capture data and video-based tracking data, with walking, jogging, cartwheels, and jumping.},
+author = {Brubaker, Marcus A. and Sigal, Leonid and Fleet, David J.},
+doi = {10.1109/iccv.2009.5459407},
+file = {:scratch0/resources/papers/uncategorized/estimating{\_}contact{\_}dynamics.pdf:pdf},
+isbn = {9781424444199},
+journal = {2009 IEEE 12th International Conference on Computer Vision},
+number = {Iccv},
+pages = {2389--2396},
+publisher = {IEEE},
+title = {{Estimating contact dynamics}},
+year = {2010}
+}
+
+@article{Watter2015,
+abstract = {We introduce Embed to Control (E2C), a method for model learning and control of non-linear dynamical systems from raw pixel images. E2C consists of a deep generative model, belonging to the family of variational autoencoders, that learns to generate image trajectories from a latent space in which the dynamics is constrained to be locally linear. Our model is derived directly from an optimal control formulation in latent space, supports long-term prediction of image sequences and exhibits strong performance on a variety of complex control problems.},
+archivePrefix = {arXiv},
+arxivId = {1506.07365},
+author = {Watter, Manuel and Springenberg, Jost Tobias and Boedecker, Joschka and Riedmiller, Martin},
+eprint = {1506.07365},
+file = {:scratch0/resources/papers/uncategorized/embed{\_}to{\_}control{\_}locally{\_}linear.pdf:pdf},
+pages = {1--18},
+title = {{Embed to Control: A Locally Linear Latent Dynamics Model for Control from Raw Images}},
+url = {http://arxiv.org/abs/1506.07365},
+year = {2015}
+}
+
+@article{Lange2012,
+abstract = {We propose a learning architecture, that is able to do reinforcement learning based on raw visual input data. In contrast to previous approaches, not only the control policy is learned. In order to be successful, the system must also autonomously learn, how to extract relevant information out of a high-dimensional stream of input information, for which the semantics are not provided to the learning system. We give a first proof-of-concept of this novel learning architecture on a challenging benchmark, namely visual control of a racing slot car. The resulting policy, learned only by success or failure, is hardly beaten by an experienced human player.},
+author = {Lange, Sascha and Riedmiller, Martin and Voigtl{\"{a}}nder, Arne},
+doi = {10.1109/IJCNN.2012.6252823},
+file = {:scratch0/resources/papers/uncategorized/autonomous{\_}reinforcement{\_}learning{\_}vision.pdf:pdf},
+isbn = {9781467314909},
+journal = {Proceedings of the International Joint Conference on Neural Networks},
+title = {{Autonomous reinforcement learning on raw visual input data in a real world application}},
+year = {2012}
+}
+
+======================================
+
+Other
+=========================
+@article{Pearl2009,
+abstract = {This reviewpresents empirical researcherswith recent advances in causal inference, and stresses the paradigmatic shifts that must be un- dertaken in moving fromtraditional statistical analysis to causal analysis of multivariate data. Special emphasis is placed on the assumptions that un- derly all causal inferences, the languages used in formulating those assump- tions, the conditional nature of all causal and counterfactual claims, and the methods that have been developed for the assessment of such claims. These advances are illustrated using a general theory of causation based on the Structural Causal Model (SCM) described in Pearl (2000a), which subsumes and unifies other approaches to causation, and provides a coher- entmathematical foundation for the analysis of causes and counterfactuals. In particular, the paper surveys the development of mathematical tools for inferring (from a combination of data and assumptions) answers to three types of causal queries: (1) queries about the effects of potential interven- tions, (also called “causal effects” or “policy evaluation”) (2) queries about probabilities of counterfactuals, (including assessment of “regret,” “attri- bution” or “causes of effects”) and (3) queries about direct and indirect effects (also known as “mediation”). Finally, the paper defines the formal and conceptual relationships between the structural and potential-outcome frameworks and presents tools for a symbiotic analysis that uses the strong features of both.},
+archivePrefix = {arXiv},
+arxivId = {arXiv:1112.1788v3},
+author = {Pearl, Judea},
+doi = {10.1214/09-SS057},
+eprint = {arXiv:1112.1788v3},
+file = {:nfshomes/krusinga/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Pearl - 2009 - Causal inference in statistics An overview.pdf:pdf},
+isbn = {1935-7516},
+issn = {1935-7516},
+journal = {Statistics Surveys},
+keywords = {Structural equation models, confounding, graphical,and phrases,causal effects,causes of effects,confounding,counterfactuals,graph-,ical methods,mediation,policy evaluation,potential-outcome,received september 2009,structural equation models},
+number = {0},
+pages = {96--146},
+title = {{Causal inference in statistics: An overview}},
+volume = {3},
+year = {2009}
 }
