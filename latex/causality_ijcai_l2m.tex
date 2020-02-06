@@ -98,13 +98,19 @@ In a given learning environment, some variables are causal, and some are merely 
 % (Do I want to stick with the IJCAI format, or go to something else, like single page?)
 
 \section{Introduction}
-The importance of embedding causal reasoning into machine learning has become increasingly noticed in recent years. Most existing machine learning algorithms establish correlation only; this is usually enough for prediction, but it is not enough for other kinds of reasoning, such as counterfactual reasoning \cite{pearl2018theoretical} \cite{Pearl2009}. Furthermore, causal reasoning is, in principle, both more \emph{efficient} and more \emph{generalizable} than reasoning based on correlation only: causal rules presumably hold between different domain-shifted datasets of the same kind even when correlations change \cite{Bottou2019presentation}. 
+The importance of embedding causal reasoning into machine learning has become increasingly noticed in recent years. Most existing machine learning algorithms establish correlation only; this is usually enough for prediction, but it is not enough for other kinds of reasoning, such as counterfactual reasoning \cite{pearl2018theoretical} \cite{Pearl2009}. Furthermore, causal reasoning is, in principle, 
+%both more \emph{efficient} and 
+more \emph{generalizable} than reasoning based on correlation only: causal rules presumably hold between different domain-shifted datasets of the same kind even when correlations change \cite{Bottou2019presentation}. 
 
 We conduct a preliminary investigation into training a model using background knowledge of causality in a simple game environment - in this case, Pong. Suppose that two factors can vary - the size of the player's Pong paddle relative to the opponent's, and the background color. Since the transition model in Pong is fully known, we know \emph{a priori} that background color will not affect the gameplay, but paddle size will. (If we did not know this \emph{a priori}, we could figure it out by performing simple experiments in which we intervene randomly on these attributes, then observe the outcomes). Suppose also that we have a biased dataset in which both color and paddle size correlate with outcome. Can we train a model on this biased dataset to ignore the non-causal variable and pay attention only to the causal one?
 
-Many real-world problems come with similar kinds of background knowledge that could potentially be exploited in this way; in the causal literature, this knowledge is explicitly represented by structural causal models \cite{Pearl2009} \cite{pearl2009causalitybook}. For example, we know that lighting conditions do not affect the laws of motion, yet datasets are likely to be biased towards the daytime, potentially introducing spurious correlations [find a better example].
+Many real-world problems come with similar kinds of background knowledge that could potentially be exploited in this way; in the causal literature, this knowledge is explicitly represented by structural causal models \cite{Pearl2009} \cite{pearl2009causalitybook}. For example, we know that lighting conditions do not affect the laws of motion, yet datasets are likely to be biased towards the daytime, potentially introducing spurious correlations between daylight and outcomes. %Find better example?
 
-We propose that this problem could be solved with a simple adversarial objective. We train a network to predict the likelihood of a certain game outcome given a single frame (so that the probability of winning is predicted based only on fixed game attributes); in addition, we add a secondary predictor late in the network that predicts the value of the non-causal variable (in this case, background color). The objective function of the secondary predictor is to minimize the error in its prediction of background color. The objective function of the outcome predictor is to minimize error in its win-probability predictions while maximizing error in the secondary color predictor. This forces the primary network to make its prediction based only on factors unrelated to color, hopefully removing the spurious correlation between color and outcome. [Cite GANs and data-privacy learning here?]
+We propose that this problem could be solved with a simple adversarial objective. We train a network to predict the likelihood of a certain game outcome given a single frame (so that the probability of winning is predicted based only on fixed game attributes); in addition, we add a secondary predictor late in the network that predicts the value of the non-causal variable (in this case, background color). The objective function of the secondary predictor is to minimize the error in its prediction of background color. The objective function of the outcome predictor is to minimize error in its win-probability predictions while maximizing error in the secondary color predictor. This forces the primary network to make its prediction based only on factors unrelated to color, hopefully removing the spurious correlation between color and outcome. We are motivated by the literature on generative adversarial networks, transfer learning, and data anonymization 
+\cite{feutry2018learning} \cite{hukkelaas2019deepprivacy} \cite{li2009modeling} %Anonymization
+\cite{tan2018survey} \cite{ganin2016domain} % Transfer learning
+\cite{goodfellow2014generative} %GANs
+.
 
 
 \section{Background}
@@ -125,7 +131,6 @@ In general, it is not possible to infer causal relations without the ability to 
 
 
 \textbf{Relation to Reinforcement learning}
-
 
 
 
