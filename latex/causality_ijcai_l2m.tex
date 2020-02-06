@@ -116,8 +116,13 @@ We propose that this problem could be solved with a simple adversarial objective
 \section{Background}
 Causal inference is the study of counterfactual distributions. Counterfactuals are questions of the form ``What would happen if X?", or ``What would have happened had X been different?" \cite{pearl2018theoretical}. Of central importance is the idea of an ``intervention": a surgical change, whether actually performed or imagined, in the deeper transition model (possibly with hidden states) that generates the observed data, such that all but a small portion of the transition function remains the same. For a concrete example: observation is noticing that wet grass correlates with rain; intervention is wetting the grass with a hose to see if rain starts falling, thus answering the counterfactual question ``Would wetting the grass bring the rain?" (This intervention is surgical in the sense that wetting the grass does not have arbitrarily widespread effects, such as changing the physics of the atmosphere. In general, it is never \emph{certain} whether or not an intervention was truly surgical or local in this sense, but steps like randomized controls can get close).
 	
-In general, it is not possible to infer causal relations without the ability to interact with the environment and perform experiments. This is, in short, because probability distributions over counterfactual data are underdetermined by observed data - multiple transition models could explain the observed data - and moreover, interventions could potentially have different effects depending on how they are done (e.g., running a study in a lab versus in the field where there may be different background dynamics). However, it is possible, under certain conditions, to infer causal effects from purely observational data. These conditions include either sufficiently detailed background knowledge about the domain from which the data was sampled \cite{Pearl2009} \cite{Rosenbaum1983}, or restricted formalizations such as Granger causality \cite{granger1969investigating} \cite{granger1980testing}. Under such conditions, it is possible to use techniques such as propensity score matching \cite{Rosenbaum1983}, inverse probability weighting [cite this] or directly conditioning on confounding to ascertain causal effects.
+In general, it is not possible to infer causal relations without the ability to interact with the environment and perform experiments. This is, in short, because probability distributions over counterfactual data are underdetermined by observed data - multiple transition models could explain the observed data - and moreover, interventions could potentially have different effects depending on how they are done (e.g., running a study in a lab versus in the field where there may be different background dynamics). However, it is possible, under certain conditions, to infer causal effects from purely observational data. These conditions include either sufficiently detailed background knowledge about the domain from which the data was sampled \cite{Pearl2009} \cite{Rosenbaum1983}, or restricted formalizations such as Granger causality \cite{granger1969investigating} \cite{granger1980testing}. Under such conditions, it is possible to use techniques such as propensity score matching \cite{Rosenbaum1983}, inverse probability weighting \cite{seaman2013review} or directly conditioning on confounding to ascertain causal effects.
 
+
+% Pasted from workshop_submission to NeurIps
+\textbf{Connection to reinforcement learning.} The major problem with causality in machine learning is the fact that data points are high-dimensional, and thus the space of all possible causal graphs is intractable; method of simplifying the problem are needed. A promising direction for high dimensional causal inference is reinforcement learning \cite{Sutton2018}, which is strongly related to causal modeling in that it explicitly represents actions performed in the environment. Actions correspond directly to interventions in some causal model. For example, \cite{Oh2015} uses a reinforcement learning agent to play Atari games. The agent can interact with the environment by generating controller inputs, which directly cause changes in the environment in response; thus the agent learns not just how typical Atari gameplay looks, but also the effects of interventions on the observed video sequences. There is not much overlap in the literature of reinforcement learning and causal inference, though some papers have made promising connections. For example, \cite{Dasgupta2019} uses the method of meta-reinforcement learning to train an agent to predict the effects of interventions on randomly generated causal graphs. Other papers, such as \cite{Lange2012}, contribute methods of embedding high dimensional data into low-dimensional spaces on which action policies can be computed. Such low dimensional representations may be useful for problems of causal inference. A method from outside the reinforcement learning paradigm which achieves a similar kind of embedding is \emph{slow feature analysis} \cite{kompella2011incremental}, which takes high dimensional data and identifies latent causal factors on the assumption that they change more slowly than the observed output stream.
+
+\textbf{Prediction and causality.} There are strong connections between predictive models and causal inference. The connection results from the fact that every predictive model can be regarded as a sort of causal model whose points of intervention are the internal state variables of the predictor function. For example, consider a model that takes $m$ past video frames inside an image space $I$ and predicts $n$ future video frames via the function $F: I^m \rightarrow I^n$. Suppose that $F$ factors as the composition of $G: I^m \rightarrow Z$ and $H: Z \rightarrow I^n$, where $Z$ is a latent space. The function $H$ automatically defines the effects of all possible interventions on $Z$. If $Z$ corresponds to a disentangled, interpretable set of high-level image properties, such as whether or not a car in a video is driving smoothly or erratically, then we can use $H$ to predict the likely effects of interventions without actually having performed any interventions during training. Examples of models that learn disentangled representations include \cite{chen2016infogan} for static images and \cite{denton2017unsupervised} for videos. There are also many models that attempt to directly predict future video frames, such as \cite{Babaeizadeh2017}, \cite{Lotter2016}, \cite{Finn2016}, \cite{Walker2014}. Such models might be combined with causal methods to infer underlying causal structure in video.
 
 
 % Draw heavily on the BeamNG workshop submission's intro here for text and citations and such.
@@ -126,19 +131,19 @@ In general, it is not possible to infer causal relations without the ability to 
 
 
 
-\textbf{Relation to transfer learning}
+%\textbf{Relation to transfer learning}
 
 
 
-\textbf{Relation to Reinforcement learning}
+%\textbf{Relation to Reinforcement learning}
 
 
 
-\textbf{Relation to predictive models}
+%\textbf{Relation to predictive models}
 
 
 
-\textbf{Background of adversarial scrubbing or something}
+%\textbf{Background of adversarial scrubbing or something}
 
 
 
@@ -150,6 +155,17 @@ In general, it is not possible to infer causal relations without the ability to 
 %Using the TEF framework, we simulate Pong games, varying the background color (Red or Blue) and the paddle size of the agent relative to the opponent (large or small). Table \ref{tab:dataset_proportions} shows four datasets, consisting of 50 games each, whose frames are labeled with a 1 if the agent wins the game, and a 0 otherwise. Each column shows, for the frames from a particular set of games simulated with the fixed column parameters, the proportion of the total dataset constituted by those frames (left), and the proportion of those frames that are part of a winning game (right, bold). There are four datasets: the original D1, the ``Interventional" data corresponding to a domain shift in data proportions, and truncated versions of each of these. In the truncated versions, the latter half of each game is thrown out, so that the models are forced to distinguish the winner and loser more by looking at the fixed paddle size and color rather than particular ball position, as we are only interested in the causal effect of these factors.
 
 %There are two models, each consisting of the same basic convolutional neural network, but one with an extra adversarial objective that forces the model to not consider color information when making its predictions. Table \ref{tab:model_performance} shows each type of model's learned category-specific winning probability predictions (averaged over data points in that category) after 50 epochs. Ideally, these numbers should match up with the bolded numbers in Table \ref{tab:dataset_proportions}.
+
+In our experiments, we ask, ``can a model learn to ignore a spurious correlation between a causally irrelevant variable and an outcome?" We use the Darpa L2M Test and Evaluation Framework to generate two datasets, each consisting of the frames from 50 games of Pong between two computer agents. We consistently root for one of the agents, and each frame is labeled with a 0 or a 1 depending on whether our agent wins that game. (Henceforth, we shall simply refer to ``the agent" or ``the opponent"). Table \ref{tab:dataset_proportions} summarizes the two datasets (and their truncated versions, as we tested in practice). The training set varies the paddle size of the agent relative to the opponent, which has a causal effect on the probability of victory. The background color is also varied between red and blue. However, we introduce a spurious correlation between the background color and the outcome, such that games with a red background also have larger agent paddles, and so have higher win percentages. Games with a blue background have smaller paddles, and lower win percentages. In the second ``interventional" or ``domain-shifted" dataset, the spurious correlation is reversed, and now blue games have larger paddles.
+
+\textbf{Models.} Our model consists of a convolutional neural network that maps a $128\times 128 \times 3$ game image to a predicted probability of win or loss for the agent. This model only considers one frame at a time, to assess the causal influence of factors that remain constant throughout the games. There is a separate ``color adversary" model that takes one of the latent feature embeddings later in the conv net and maps it to a prediction of the color of the output. During regular training, the conv net learns to predict win or loss only. During adversarial training, the color adversary predicts the background color from the embedding and attempts to maximize its accuracy, while the conv net is trained to minimize the accuracy of the color adversary while maximizing the accuracy of the win/loss prediction.
+
+\textbf{Experiments and Results.} We train the conv net on the first dataset and test on the second, both with and without the color adversary. We later repeated this training process with the truncated versions of both datasets (as seen in Table \ref{tab:dataset_proportions}) in which the latter 50\% of each game is excluded from the data, so that the networks make their predictions only based on static information in the images, and that our results are not confounded by accuracy gained from the last few frames of each game in which the win or loss is apparent from the position of the ball. Each model is trained for 50 epochs with the Adam optimizer, batch size 64. %Check these numbers
+
+Table \ref{tab:model_performance} shows each model's predictions in each quadrant where data existed. These predictions can be compared to the bolded numbers in Table \ref{tab:dataset_proportions} for the corresponding dataset. Without the adversary, the model is able to predict the quadrant-specific win probabilities quite accurately, on both regular and truncated datasets. However, it is less accurate on the regular and truncated interventional datasets, as expected, although its predictions are directionally correct from the original dataset. This is consistent with the idea that the model learns some predictive information from paddle size, and some from color.
+
+The second half of table \ref{tab:model_performance} shows the effect of the adversarial training.
+
 
 
 %%%%% Training category proportions %%%%%%%
@@ -195,7 +211,7 @@ Adversary  & Truncated D1 Intervention & - & 0.3159 & 0.3807 & -
 
 
 
-\section{Results}
+%\section{Results}
 
 
 
@@ -206,7 +222,8 @@ Adversary  & Truncated D1 Intervention & - & 0.3159 & 0.3807 & -
 
 
 
-\section{Conclusion}
+\section{Conclusion and Future Work}
+We believe that causality is a fruitful area of research. In the future, we intend to explore more dynamic models that account for transitions between frames, as well as models capable of automatically learning the causally relevant variables rather than relying on explicitly programmed background information.
 
 
 
@@ -218,6 +235,7 @@ Adversary  & Truncated D1 Intervention & - & 0.3159 & 0.3807 & -
 % Acknowledge Darpa L2M
 \section{Acknowledgement}
 
+We would like to thank the Lifelong Learning Machines program from DARPA/MTO for their support of this project.
 
 
 
