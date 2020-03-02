@@ -192,14 +192,19 @@ class OurRewardPredictor(nn.Module):
 #           paddle_loss.backward()
 #           self.paddle_optimizer.step()
 
-    def save_model(self, folder=L2DATA):
+    def save_model(self, folder=L2DATA, ask_rename=False):
         fullfolder = os.path.join(folder, 'models', self.experiment_name)
         if not os.path.exists(fullfolder):
             os.makedirs(fullfolder)
         fname = os.path.join(fullfolder, self.model_name+'.pkl')
+        iters = 1
         while os.path.exists(fname):
             print("Warning: model file already exists, press enter to overwrite or type a new model name")
-            newname = input()
+            if ask_rename:
+                newname = input()
+            else:
+                newname = fname+'_'+str(iters)
+                iters += 1
             if len(newname) > 0:
                 self.model_name = newname
                 fname = os.path.join(fullfolder, self.model_name+'.pkl')
