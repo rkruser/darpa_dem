@@ -13,7 +13,7 @@ In order to use this file:
 
 
 
-Notes: Things to change 2/2/20
+Notes: Things to change 3/3/20
 
 - Train function should act on existing objects, not create them.
 - Train function should not directly deal with hardware info (use sub functions if necessary)
