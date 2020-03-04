@@ -48,6 +48,8 @@ class PongDataset(torch.utils.data.Dataset):
 # Dataset construction functions
 ############################################################################
 
+# NOTE: these seem reasonable, but need to verify
+
 # Discretize color
 def standard_color_map(rgb_triple):
     if rgb_triple[0] > 128:
@@ -62,7 +64,7 @@ def standard_reward_map(reward_value):
     else:
         return 1
 
-# Large = 1, small = 0 # For weird code history reasons
+# Discretize size
 def standard_size_map(size):
     if size > 0.2:
         return 1
@@ -72,34 +74,32 @@ def standard_size_map(size):
 def identity_map(size):
     return size
 
-def Construct_Pong_Dataset(json_file, 
+def Construct_Pong_Dataset(
+                 json_file, 
                  train_proportion=0.8, 
                  color_map = standard_color_map, 
                  reward_map = standard_reward_map, 
                  size_map = standard_size_map,
                  game_keys=['l2arcadekit.l2agames:Pong'],
-                 samples_per_game = None,
-                 resize=None,
-                 noise=None,
+                 samples_per_game = None, #int for number of samples per game (to remove bias)
+                 resize=None, #int of new image size
+                 noise=None, #Float for variance of Gaussian noise
                  cutoff=None #float for where to cut off the dataset
                  ):
+
     name = os.path.basename(os.path.splitext(json_file)[0])
     fullpath = os.path.join(L2DATA, 'data', name, name+'.hdf5')
-#    color_map = color_map # How to turn rgb colors into discrete labels
-#    reward_map = reward_map
-#    size_map = size_map
-#    game_keys = game_keys
-    
     datafile = h5py.File(fullpath, 'r')
+
     counts = []
     all_data = {'state':[], 'outcome':[], 'bg_color':[], 'paddle_size':[]}
-    for game_key in iter(datafile):
+    for game_key in iter(datafile): #iterate over types of games
         if game_keys is not None:
-            if game_key not in game_keys:
+            if game_key not in game_keys: #Only select the particular kind of game
                 continue
         game = datafile[game_key]
         
-        for param_hash in iter(game):
+        for param_hash in iter(game): #For each set of parameters used in that game
             param_set = game[param_hash]
             param_values = json.loads(param_set.attrs['parameter_values'])
             current_color = torch.Tensor(1).fill_(color_map(param_values['bg_color']))
@@ -109,7 +109,7 @@ def Construct_Pong_Dataset(json_file,
 #            current_size_bot = torch.Tensor(1).fill_(size_map(param_values['bot/paddle/width']))
 #             Note difference between bot/paddle/width and agent/paddle/width!
             
-            for episode_id in iter(param_set):
+            for episode_id in iter(param_set): #For each game played with that set of parameters
                 episode = param_set[episode_id]
             
                 rewards_dset = episode['rewards']
