@@ -389,8 +389,27 @@ def test4():
     print(tclass.marzapan)
         
 
+def test5():
+    class bclass:
+        @staticmethod
+        def get_name():
+            pass
+        def __init__(self):
+            print("My name is {}".format(self.get_name()))
+
+    class dclass(bclass):
+        @staticmethod
+        def get_name():
+            return "heyyy"
+        def __init__(self):
+            super().__init__()
+
+    a = dclass()
+
+
 if __name__=='__main__':
 #    test1()
-    test2()
+#    test2()
 #    test3()
 #    test4()
+    test5()
