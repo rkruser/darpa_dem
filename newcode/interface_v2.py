@@ -14,6 +14,7 @@ import sys
 import argparse
 import json
 import os
+import time
 
 # Pytorch
 import torch
@@ -95,6 +96,7 @@ class Model(nn.Module):
             setattr(self, k, kwargs[k]) # can this be called from self?
 
     # Return model name
+    # Make these depend on specific model params, for exactness
     @property
     def model_class_name(self):
         pass
@@ -120,7 +122,7 @@ class Model(nn.Module):
 
     def forward(self, x):
         out = self._forward(x)
-        filtered_out = tuple(out[k] for k in self.returnkeys)
+        filtered_out = tuple(out[k] for k in self.return_keys)
         if len(filtered_out) == 1:
             filtered_out = filtered_out[0]
         return filtered_out
@@ -137,6 +139,7 @@ class Tracker:
 class ModelCollection:
     def __init__(self, **kwargs):
         self.models = kwargs.get('models',[])
+        self.model_folders = kwargs.get('model_paths',[])
         self.optimizers = kwargs.get('optimizers',[])
         self.trackers = kwargs.get('trackers', [])
         self.opts = kwargs.get('opts',{})
@@ -155,7 +158,7 @@ class ModelCollection:
 #        self.current_state = None
 
     @property
-    def name(self):
+    def collection_name(self):
         return self.name
 
     def evaluate_and_update(self, x, **opts):
@@ -180,7 +183,19 @@ class ModelCollection:
 
     # Save/load interface? Yes, need to have this
     def save_collection(self, checkpoint_num=None):
-        pass
+        assert(len(models) == len(model_paths))
+        timestr = timestamp_string()
+        append_num = str(checkpoint_num) if (checkpoint_num is not None) else ''
+        for i, m in enumerate(self.models):
+            m.save_model(os.path.join(self.model_folders[i], 
+                                      self.collection_name, 
+                                      m.model_instance_name+'_'+m.model_class_name+'_'+append_num+'.pth'))
+            
+
+
+
+def timestamp_string():
+    return time.strftime('%H:%M:%S_%m_%d_%Y',time.gmtime())
 
 
 
@@ -274,6 +289,8 @@ class DataBatchBase:
 
 # Revamp the dataset object
 
+
+#---
 
 # Consider the trackers
 
