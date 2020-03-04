@@ -2,17 +2,10 @@
 '''
 In this file I will template out an interface for running experiments.
 
-
-
 Hyperparams:
 - Use kwargs in model + dictionary of params
 - Have a function that takes the dictionary and renders command line arguments to change the values?
 - 
-
-
-
-
-
 '''
 
 
@@ -76,14 +69,14 @@ def parse_dict_options(*arg_dicts, arg_list=sys.argv[1:], arg_descriptions={}):
 
     return new_dicts
 
+# Easy interface for accessing dicts
+# basically easydict
+class AttrDict:
+    def __init__(self, **kwargs):
+        for k in kwargs:
+            setattr(self, k, kwargs[k])
 
-'''
-def move_to_device(*args):
-    for a in args:
-'''      
 
-
-# Inherit from nn.module?
 # Don't bother with data_parallel at the moment
 # Doesn't need to reference cuda explicitly
 class Model(nn.Module):
@@ -135,7 +128,9 @@ class Model(nn.Module):
     # def get_params()
     #  overload this if needed
 
-
+'''
+class Tracker:
+'''
 
 # Collect several models and relate them
 # Track the models, their optimizers, and the loss criteria
@@ -180,15 +175,12 @@ class ModelCollection:
             t.reset()
 
     # Logging interface?
+    def log(self, stats):
+        pass #use tensorboard
 
-
-    # Save/load interface?
+    # Save/load interface? Yes, need to have this
     def save_collection(self, checkpoint_num=None):
         pass
-
-
-    # Leave room for inheritance?
-
 
 
 
@@ -205,9 +197,11 @@ def train_test_loop(model_collection, dataloader, nepochs=10, checkpoint_every=1
     for epoch in range(nepochs):
         for i, batch in enumerate(dataloader):
             batch_stats = batch_func(batch)
+            model_collection.log(batch_stats) #Implement this
             if i%print_every == 0:
                 print(batch_stats)
         summary = model_collection.tracker_summary()
+        model_collection.log(summary)
         model_collection.reset_trackers()
         print(summary)
         if test_mode:
@@ -227,55 +221,83 @@ def train_test_loop(model_collection, dataloader, nepochs=10, checkpoint_every=1
 # Generally set pin_memory to True for gpu use,
 #  and overload pin_memory function in data return
 
-class DataLoader_To_Device(torch.utils.data.DataLoader):
-    def __init__(self, device, **kwargs):
-        super().__init__(**kwargs)
-        self.device = device
 
-    def __iter__(self):
-        for v in super().__iter__():
-            yield v.to(self.device)
-
-# Return a dataloader
 # See https://pytorch.org/docs/stable/data.html
-def construct_data_loader(dataset, **kwargs):
-    loader_args = {
-        'device':'cpu',
-        'batch_size':64,
-        'collate_fn':None,
-        'num_workers':4
-    }
-    loader_args.update(kwargs)
-    return torch.utils.data.DataLoader(dataset, **loader_args)
+class DataLoaderToDevice(torch.utils.data.DataLoader):
+    def __init__(self, dataset, device='cpu', **kwargs):
+        super().__init__(dataset, **kwargs)
+        self.device = device
+    def __iter__(self):
+        return self
+    def __next__(self):
+        return super().__next__().to(self.device)
 
 
-'''
-    def cuda(self):
-        for i in len(self.models):
-            self.models[i] = self.models[i].cuda() # Will this change the object in-place?
+# To be returned by dataset / dataloader
+class DataBatchBase:
+    # Derived classes need to implement data_keys()
+    @staticmethod
+    def data_keys():
+        pass #Return a list of keys
 
-    def to(self, device):
-        for i in len(self.models):
-            self.models[i] = self.models[i].to(device)
+    def __init__(self, **kwargs):
+        keys = self.data_keys()
+        for k in keys:
+            setattr(self,k,kwargs.get(k,None))
 
-    def reset_grad(self):
-        if self.reset_grad_func:
-            self.reset_grad_func(self.models)
-        else:
-            for m in self.models:
-                m.zero_grad()
+    # Use in dataloader for collate function
+    @classmethod
+    def collate(cls, point_list):
+        keys = cls.data_keys()
+        collate_dict = {}
+        for k in keys:
+            val_list = []
+            for p in point_list:
+                val_list.append(getattr(p, k))
+            collate_dict[k] = torch.cat(val_list, dim=0) #Presumes points already unsqueezed in batch dim
+        return DataBatch(**collate_dict)
 
-    def grad_backward(self):
-        if self.grad_backward_func:
-            self.grad_backward_func(self.current_state)
-        else:
-            for 
+    # So can set pin_memory to true
+    def pin_memory(self):
+        keys = self.data_keys()
+        for k in keys:
+            setattr(self, k, getattr(self,k).pin_memory())
 
-    # Run the optimizers
-    def update(self):
-        for opt in self.optimizers:
-            opt.step()
-'''
+
+
+
+################### TODO ####################
+# (Reuse as much code as possible)
+
+# Create the individual network models
+
+
+# Revamp the dataset object
+
+
+# Consider the trackers
+
+
+# Write the save/load function for ModelCollection
+
+
+# Write functions for specific model setups that return model collections
+#  (Need to create optim objects, eval criterion objects, etc.)
+#  (Need to write the eval function for inner train loop
+
+
+# Track save locations in an object (don't spend too much time here)
+
+
+# Nicer output viewing and ability to get images out
+
+
+# Then: TEST TEST TEST
+
+
+############################################
+
+
 
 
 # Define methods to save the model, checkpoint, get params, etc.
@@ -292,6 +314,66 @@ def test1():
     print(newd, newz)
 
 
+def test2():
+    class iter1:
+        def __init__(self):
+            self.state=0
+            self.size=10
+        def __iter__(self):
+            return self
+        def __next__(self):
+            if self.state == self.size:
+                self.state=0
+                raise StopIteration
+            old_state = self.state
+            self.state += 1
+            return old_state
+
+    class iterDerived(iter1):
+        def __init__(self):
+            super().__init__()
+        def __iter__(self):
+            return self
+        def __next__(self):
+            return super().__next__()*2
+
+    #obj = iter1()                
+    obj = iterDerived()
+    for i in obj:
+        print(i)
+
+    print(dir(obj))
+    print(getattr(obj,'state'))
+
+def test3():
+    def func1(a, b=3, **kwargs):
+        return a*b
+    def func2(a, b=3):
+        return a*b
+#    print(func1(2,c=9))
+    print(func2(3,c=9))
+        
+
+def test4():
+    class tclass:
+        @property
+        def marzapan():
+            return 4
+        def __init__(self):
+            return
+        
+    class dclass(tclass):
+        def __init__(self):
+            return
+
+    o1 = tclass()
+    o2 = dclass()
+
+    print(tclass.marzapan)
+        
 
 if __name__=='__main__':
-    test1()
+#    test1()
+    test2()
+#    test3()
+#    test4()
