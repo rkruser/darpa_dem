@@ -63,8 +63,10 @@ def parse_dict_options(*arg_dicts, arg_list=sys.argv[1:], arg_descriptions={}):
 
 # Easy interface for accessing dicts
 # basically easydict
-class AttrDict:
+# Consider inheriting from dict
+class AttrDict(dict):
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         for k in kwargs:
             setattr(self, k, kwargs[k])
 
@@ -75,7 +77,10 @@ def print_statistics():
     pass
 
 
-
+# For tracker interface?
+# Reuse Meter?
+class Tracker:
+    pass
 
 
 

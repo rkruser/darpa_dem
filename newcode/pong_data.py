@@ -1,6 +1,6 @@
 # PyTorch dataloader for the generated h5py data
 
-from dataset import *
+from data_base import *
 
 import os
 import json
