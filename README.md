@@ -31,3 +31,10 @@ Re:dataloader
 - Reconsider sampling model
 - Predictors for other values like paddle size, to see if they work.
 - How to deal with small features?
+
+
+Notes: Things for 3/5/20
+- Add ball color ability to dataloader (done)
+- New optimizer(s) that allow for specific prediction of attributes, or combined prediction
+- Check print stats to allow ball color
+- Experiments with ball color vs. paddle length

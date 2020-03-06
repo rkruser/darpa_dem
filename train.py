@@ -6,7 +6,9 @@ from torch.utils.data import DataLoader
 import learnkit
 from learnkit.utils import module_relative_file
 
-from models import OurRewardPredictor, OurSimpleRewardPredictor, OurOptimizer, Meters, OptWithPaddleLoss
+from models import OurPredictor, OurSimpleRewardPredictor, OurOptimizer, Meters, OptWithPaddleLoss
+from models import BallColorOptimizer, PaddleSizeOptimizer
+
 from dataloader import L2DATA, Construct_L2M_Dataset
 
 from torch.utils.tensorboard import SummaryWriter
@@ -18,20 +20,22 @@ def train_model(mclass, train_syllabus, test_syllabus,
                 nepochs, model_name, use_adversary, paddle_predictor, 
                 OptClass=OurOptimizer, gpu=0,
                 resize=None, noise=None, loadname=None, 
-                loadmodel=False, cutoff=None):
+                loadmodel=False, cutoff=None, samples_per_game=None,
+                ):
+
     exp_name = os.path.basename(os.path.splitext(train_syllabus)[0])
     model = mclass(loadmodel=loadmodel, experiment_name=exp_name, model_name=model_name,
                                 color_adversary=use_adversary, 
                                 paddle_predictor=paddle_predictor,
-                                gpuid=gpu, loadname=loadname)
+                                gpuid=gpu, loadname=loadname) # Need to add main_out_key to simple predictor maybe
     optim = OptClass(model)
 
 #    totalset = L2M_Pytorch_Dataset(syllabus)
 #    train_length = int(0.8*len(totalset))
 #    test_length = len(totalset)-train_length
 #    trainset, testset = torch.utils.data.random_split(totalset, (train_length, test_length))
-    trainset, _ = Construct_L2M_Dataset(train_syllabus, train_proportion=1, resize=resize, noise=noise, cutoff=cutoff)
-    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1, resize=resize, noise=None, cutoff=cutoff)
+    trainset, _ = Construct_L2M_Dataset(train_syllabus, train_proportion=1, resize=resize, noise=noise, cutoff=cutoff, samples_per_game=samples_per_game)
+    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1, resize=resize, noise=None, cutoff=cutoff, samples_per_game=samples_per_game)
 
     print("Train stats:")
     trainset.print_statistics()
@@ -68,16 +72,16 @@ def train_model(mclass, train_syllabus, test_syllabus,
             model.update(loss)
 
             # Logging
-            meters.update('trainloss', loss['reward_loss'].item(), batch_size)
-            meters.update('trainacc', loss['reward_num_correct'].item(), batch_size)
+            meters.update('trainloss', loss['outcome_loss'].item(), batch_size)
+            meters.update('trainacc', loss['outcome_num_correct'].item(), batch_size)
             if loss['sumgrid'] is not None:
                 meters.update('traingrid', loss['sumgrid'], loss['totalgrid'])
             if loss['adversary_loss'] is not None:
                 meters.update('trainloss_adv', loss['adversary_loss'].item(), batch_size)
                 meters.update('trainacc_adv', loss['adversary_num_correct'].item(), batch_size)
-            if loss['paddle_detached_loss'] is not None:
-                meters.update('trainloss_paddle', loss['paddle_detached_loss'].item(), batch_size)
-                meters.update('trainacc_paddle', loss['paddle_acc'].item(), batch_size)
+#            if loss['paddle_detached_loss'] is not None:
+#                meters.update('trainloss_paddle', loss['paddle_detached_loss'].item(), batch_size)
+#                meters.update('trainacc_paddle', loss['paddle_acc'].item(), batch_size)
 
 
         # Test
@@ -93,16 +97,16 @@ def train_model(mclass, train_syllabus, test_syllabus,
             loss = optim.calculate_loss(y,y_hat)
 
             # Logging
-            meters.update('testloss', loss['reward_loss'].item(), batch_size)
-            meters.update('testacc', loss['reward_num_correct'].item(), batch_size)
+            meters.update('testloss', loss['outcome_loss'].item(), batch_size)
+            meters.update('testacc', loss['outcome_num_correct'].item(), batch_size)
             if loss['sumgrid'] is not None:
                 meters.update('testgrid', loss['sumgrid'], loss['totalgrid'])
             if loss['adversary_loss'] is not None:
                 meters.update('testloss_adv', loss['adversary_loss'].item(), batch_size)
                 meters.update('testacc_adv', loss['adversary_num_correct'].item(), batch_size)
-            if loss['paddle_detached_loss'] is not None:
-                meters.update('testloss_paddle', loss['paddle_detached_loss'].item(), batch_size)
-                meters.update('testacc_paddle', loss['paddle_acc'].item(), batch_size)
+#            if loss['paddle_detached_loss'] is not None:
+#                meters.update('testloss_paddle', loss['paddle_detached_loss'].item(), batch_size)
+#                meters.update('testacc_paddle', loss['paddle_acc'].item(), batch_size)
 
 
         # Tensorboard logging
@@ -112,7 +116,14 @@ def train_model(mclass, train_syllabus, test_syllabus,
         writer.add_scalar('accuracy/main/test', meters.average('testacc'), epoch)
 
         train_grid_average = meters.average('traingrid')
+        
+        # Printing!
         print(train_grid_average)
+        print("Train loss:", meters.average('trainloss'), "Test loss:", meters.average('testloss'))
+        print("Train acc:", meters.average('trainacc'), "Test acc:", meters.average('testacc'))
+
+
+
         test_grid_average = meters.average('testgrid')
         for i in range(len(train_grid_average)):
             for j in range(len(train_grid_average[i])):
@@ -144,10 +155,12 @@ if __name__ == '__main__':
     parser.add_argument('--nepochs', type=int, default=10)
     parser.add_argument('--model_name', default='PongRewardPredictor')
     parser.add_argument('--gpuid', type=int, default=0)
-    parser.add_argument('--model_class', default='OurRewardPredictor')
+    parser.add_argument('--model_class', default='OurPredictor')
     parser.add_argument('--noise', type=float, default=None)
     parser.add_argument('--loadname', default=None)
     parser.add_argument('--cutoff', type=float, default=None)
+    parser.add_argument('--samples_per_game', type=int, default=None)
+
 
     # Adversary
     parser.add_argument('--use_adversary', action='store_true')
@@ -155,11 +168,13 @@ if __name__ == '__main__':
     # Paddles
 #    parser.add_argument('--opt_class', default='OurOptimizer')
     parser.add_argument('--paddle_predictor', action='store_true')
-
+    parser.add_argument('--predict_size',action='store_true')
+    parser.add_argument('--predict_color',action='store_true')
    
     args = parser.parse_args()
     
-    mclass = OurRewardPredictor
+    mclass = OurPredictor
+
     resize=None
     if args.model_class == 'OurSimpleRewardPredictor':
         mclass = OurSimpleRewardPredictor
@@ -169,6 +184,12 @@ if __name__ == '__main__':
 #    if args.opt_class == 'OptWithPaddleLoss':
     if args.paddle_predictor:
         OptClass = OptWithPaddleLoss
+    elif args.predict_size: #Predict size instead of reward
+        OptClass = PaddleSizeOptimizer
+    elif args.predict_color: #Predict *ball* color instead of reward
+        OptClass = BallColorOptimizer
+        
+
         
     loadmodel = False
     if args.loadname is not None:
@@ -191,5 +212,6 @@ if __name__ == '__main__':
                 args.noise,
                 args.loadname,
                 loadmodel,
-                args.cutoff)
+                args.cutoff,
+                args.samples_per_game)
     

@@ -13,12 +13,17 @@ import os
 
 from dataloader import stat_grid
 
+# Need a color predictor only
+# Can use reward predictor without adversary
+
 # Should I have max pools like alexnet?
-class OurRewardPredictor(nn.Module):
+class OurPredictor(nn.Module):
     def __init__(self, loadmodel=False, loadfolder=L2DATA, experiment_name='experiment1', 
-                model_name="PongRewardsEpoch100", color_adversary=False, paddle_predictor=False,
+                model_name="PongModel", color_adversary=False, paddle_predictor=False,
                 gpuid=0, loadname=None):
         super().__init__()
+
+        self.main_out_key = 'outcome_pred'
 
         self.features = nn.Sequential(
             nn.Conv2d(3, 64, 5, stride=2, padding=2), # 3x128x128 --> 64x64x64 =lower((128-5+2*2)/2)+1
@@ -157,7 +162,7 @@ class OurRewardPredictor(nn.Module):
             p = None
 
 
-        y_hat = { 'reward_pred': y, 
+        y_hat = { self.main_out_key: y, 
                   'color_pred': c, 
                   'adversary_pred':cdetached,
                   'paddle_pred':p,
@@ -172,14 +177,14 @@ class OurRewardPredictor(nn.Module):
        self.reward_classifier.zero_grad()
        
        ####
-       self.paddle_predictor.zero_grad()
+       #self.paddle_predictor.zero_grad()
 
-       mainLoss = loss['reward_loss'] #includes adversarial color loss
+       mainLoss = loss['outcome_loss'] #includes adversarial color loss
        mainLoss.backward()
        self.main_optimizer.step()
 
        ####
-       self.paddle_optimizer.step()
+       #self.paddle_optimizer.step()
        
        if self.color_adversary:
            self.color_discriminator.zero_grad()
@@ -338,7 +343,7 @@ class OurSimpleRewardPredictor(nn.Module):
             pdetached=None
             p=None
 
-        y_hat = { 'reward_pred': y, 'color_pred': c, 'adversary_pred':cdetached, 
+        y_hat = { 'outcome_pred': y, 'color_pred': c, 'adversary_pred':cdetached, 
                     'paddle_pred':p,
                     'paddle_detached_pred':pdetached } # Not sure if detached is necessary here
 #                  'reward': y.detach().cpu().numpy()  }
@@ -349,7 +354,7 @@ class OurSimpleRewardPredictor(nn.Module):
     def update(self, loss):
        self.features.zero_grad()
        self.reward_classifier.zero_grad()
-       mainLoss = loss['reward_loss'] #includes adversarial color loss
+       mainLoss = loss['outcome_loss'] #includes adversarial color loss
        mainLoss.backward()
        self.main_optimizer.step()
        if self.color_adversary:
@@ -384,18 +389,18 @@ class OurOptimizer:
         self.lmbda = lmbda
 
     def calculate_loss(self, y, y_hat):
-        reward_predictions = y_hat['reward_pred']
+        outcome_predictions = y_hat['outcome_pred']
         color_predictions = y_hat['color_pred']
         adversary_predictions = y_hat['adversary_pred']
-        reward_actual = torch.Tensor(y['reward']).to(self.device)
-        color_actual = torch.Tensor(y['bg_color']).to(self.device)
-        size_actual = torch.Tensor(y['bot/paddle/width']).to(self.device)
+        outcome_actual = torch.Tensor(y['reward']).to(self.device)
+        color_actual = torch.Tensor(y['ball/color']).to(self.device) #formerly bg_color
+        size_actual = torch.Tensor(y['agent/paddle/width']).to(self.device) #false
 
-        reward_loss = nn.functional.binary_cross_entropy_with_logits(reward_predictions, reward_actual)
-        reward_num_correct = ((reward_predictions > 0).int() == reward_actual.int()).sum().float()
-        reward_acc = reward_num_correct / len(reward_actual)
+        outcome_loss = nn.functional.binary_cross_entropy_with_logits(outcome_predictions, outcome_actual)
+        outcome_num_correct = ((outcome_predictions > 0).int() == outcome_actual.int()).sum().float()
+        outcome_acc = outcome_num_correct / len(outcome_actual)
 
-        sumgrid, totalgrid, proportiongrid = stat_grid(torch.sigmoid(reward_predictions), size_actual, color_actual)
+        sumgrid, totalgrid, proportiongrid = stat_grid(torch.sigmoid(outcome_predictions), size_actual, color_actual)
 
         if color_predictions is not None:
             color_loss = nn.functional.binary_cross_entropy_with_logits(color_predictions, 1-color_actual)
@@ -410,12 +415,12 @@ class OurOptimizer:
             adversary_acc = None
             adversary_num_correct = None
 
-        reward_loss = reward_loss+self.lmbda*color_loss
+        outcome_loss = outcome_loss+self.lmbda*color_loss
 
-        losses = { 'reward_loss': reward_loss,
+        losses = { 'outcome_loss': outcome_loss,
                    'adversary_loss': adversary_loss,
-                   'reward_acc': reward_acc,
-                   'reward_num_correct': reward_num_correct,
+                   'outcome_acc': outcome_acc,
+                   'outcome_num_correct': outcome_num_correct,
                    'adversary_acc': adversary_acc,
                    'adversary_num_correct': adversary_num_correct,
                    'sumgrid': sumgrid.to('cpu'),
@@ -426,13 +431,75 @@ class OurOptimizer:
         return losses
 
 
+class BallColorOptimizer:
+    def __init__(self, model, lmbda=1):
+        self.device = model.device
+        self.lmbda = lmbda
+
+    def calculate_loss(self, y, y_hat):
+        color_predictions = y_hat['outcome_pred']
+        color_actual = torch.Tensor(y['ball/color']).to(self.device)
+#        size_actual = torch.Tensor(y['bot/paddle/width']).to(self.device)
+
+        color_loss = nn.functional.binary_cross_entropy_with_logits(color_predictions, color_actual)
+        color_num_correct = ((color_predictions > 0).int() == color_actual.int()).sum().float()
+        color_acc = color_num_correct / len(color_actual)
+
+
+        losses = { 'outcome_loss': color_loss, 'outcome_num_correct':color_num_correct, 'outcome_acc':color_acc,
+                   'adversary_loss': None,
+                   'paddle_detached_loss': None,
+                   'paddle_detached_rmse': None,
+                   'adversary_acc': None,
+                   'adversary_num_correct': None,
+                   'paddle_acc': None,
+                   'paddle_num_correct':None,
+                   'sumgrid': None,
+                   'totalgrid': None,
+                   'proportiongrid': None
+        }
+
+        return losses
+
+class PaddleSizeOptimizer:
+    def __init__(self, model, lmbda=1):
+        self.device = model.device
+        self.lmbda = lmbda
+
+    def calculate_loss(self, y, y_hat):
+        size_predictions = y_hat['outcome_pred']
+#        color_actual = torch.Tensor(y['ball/color']).to(self.device)
+        size_actual = torch.Tensor(y['agent/paddle/width']).to(self.device)
+        size_loss = nn.functional.binary_cross_entropy_with_logits(size_predictions, size_actual)
+        size_num_correct = ((size_predictions > 0).int() == size_actual.int()).sum().float()
+        size_acc = size_num_correct / len(size_actual)
+
+
+        losses = { 'outcome_loss': size_loss, 'outcome_num_correct':size_num_correct, 'outcome_acc':size_acc,
+                   'adversary_loss': None,
+                   'paddle_detached_loss': None,
+                   'paddle_detached_rmse': None,
+                   'adversary_acc': None,
+                   'adversary_num_correct': None,
+                   'paddle_acc': None,
+                   'paddle_num_correct':None,
+                   'sumgrid': None,
+                   'totalgrid': None,
+                   'proportiongrid': None
+        }
+
+        return losses
+
+
+
+
 class OptWithPaddleLoss:
     def __init__(self, model, lmbda=[1,1]):
         self.device = model.device
         self.lmbda = lmbda
 
     def calculate_loss(self, y, y_hat):
-        reward_predictions = y_hat['reward_pred']
+        outcome_predictions = y_hat['outcome_pred']
         color_predictions = y_hat['color_pred']
         paddle_predictions = y_hat['paddle_pred']
         paddle_detached_predictions = y_hat['paddle_detached_pred']
@@ -443,9 +510,9 @@ class OptWithPaddleLoss:
         paddle_bot_actual = torch.Tensor(y['bot/paddle/width']).to(self.device)
         paddle_agent_actual = torch.Tensor(y['agent/paddle/width']).to(self.device)
 
-        reward_loss = nn.functional.binary_cross_entropy_with_logits(reward_predictions, reward_actual)
-        reward_num_correct = ((reward_predictions > 0).int() == reward_actual.int()).sum().float()
-        reward_acc = reward_num_correct / len(reward_actual)
+        outcome_loss = nn.functional.binary_cross_entropy_with_logits(outcome_predictions, reward_actual)
+        outcome_num_correct = ((outcome_predictions > 0).int() == reward_actual.int()).sum().float()
+        outcome_acc = outcome_num_correct / len(reward_actual)
 
         if paddle_predictions is not None:
              paddle_loss = nn.functional.binary_cross_entropy_with_logits(paddle_predictions, paddle_agent_actual)
@@ -480,14 +547,14 @@ class OptWithPaddleLoss:
             adversary_acc = None
             adversary_num_correct = None
 
-        reward_loss = reward_loss+self.lmbda[0]*color_loss+self.lmbda[1]*paddle_loss
+        outcome_loss = outcome_loss+self.lmbda[0]*color_loss+self.lmbda[1]*paddle_loss
 
-        losses = { 'reward_loss': reward_loss,
+        losses = { 'outcome_loss': outcome_loss,
                    'adversary_loss': adversary_loss,
                    'paddle_detached_loss': paddle_detached_loss,
                    'paddle_detached_rmse': paddle_detached_rmse,
-                   'reward_acc': reward_acc,
-                   'reward_num_correct': reward_num_correct,
+                   'outcome_acc': outcome_acc,
+                   'outcome_num_correct': outcome_num_correct,
                    'adversary_acc': adversary_acc,
                    'adversary_num_correct': adversary_num_correct,
                    'paddle_acc': paddle_acc,

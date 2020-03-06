@@ -40,8 +40,8 @@ def identity_map(size):
 
 def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_color_map, 
                  reward_map = standard_reward_map, size_map = standard_size_map,
-                 game_keys=['l2arcadekit.l2agames:Pong'],
-                 correlate_exactly = False,
+                 game_keys=['l2arcadekit.l2agames:Pong'], #Definitions found in l2arcade_learnkint/l2arcadekit/l2agames.py
+                 samples_per_game = None,
                  resize=None,
                  noise=None,
                  cutoff=None #float for where to cut off the dataset
@@ -58,7 +58,11 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
     all_actions = []
     all_rewards = []
     counts = []
-    all_labels = {'reward':[], 'bg_color':[], 'bot/paddle/width':[], 'agent/paddle/width':[]}
+
+    #Params found in l2arcade_learnkit/l2arcadekit/param_spec
+    # There are common params (such as noise, rotation, bg_color)
+    #  Then there are game-specific params (paddle height, width, etc.)
+    all_labels = {'reward':[], 'bg_color':[], 'bot/paddle/width':[], 'agent/paddle/width':[], 'ball/color':[]}
     for game_key in iter(datafile):
         if game_keys is not None:
             if game_key not in game_keys:
@@ -69,6 +73,7 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
             param_set = game[param_hash]
             param_values = json.loads(param_set.attrs['parameter_values'])
             current_color = torch.Tensor(1).fill_(color_map(param_values['bg_color']))
+            current_ball_color = torch.Tensor(1).fill_(color_map(param_values['ball/color']))
 
             # No size map here?
             current_size_agent = torch.Tensor(1).fill_(size_map(param_values['agent/paddle/width']))
@@ -107,11 +112,18 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                     rewards = rewards[:cutoff_index]
                     actions = actions[:cutoff_index]
 
+                if samples_per_game is not None:
+                    sample_inds = torch.randint(len(states), [samples_per_game])
+                    states = states[sample_inds]
+                    rewards = rewards[sample_inds]
+                    actions = actions[sample_inds]
+
                 if resize is not None:
                     states = interpolate(states, size=resize, mode='bilinear')
                 if noise is not None:
                     states = states+noise*torch.randn(states.size())
-                    #states = (states-states.min())/(states.max()-states.min())
+                    # Uncommented below line. Let's see what happens.
+                    states = (states-states.min())/(states.max()-states.min())
 
             
                 all_states.append(states)
@@ -122,6 +134,7 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                 all_labels['bg_color'].append(current_color.repeat(len(states)))
                 all_labels['bot/paddle/width'].append(current_size_bot.repeat(len(states)))
                 all_labels['agent/paddle/width'].append(current_size_agent.repeat(len(states)))
+                all_labels['ball/color'].append(current_ball_color.repeat(len(states)))
 
     datafile.close()
 
@@ -218,7 +231,7 @@ class L2M_Pytorch_Dataset(Dataset):
 #            return im+self.noise*torch.randn(im.size()), labels
 
     def statistics(self):
-        return stat_grid(self.labels['reward'], self.labels['agent/paddle/width'], self.labels['bg_color'])
+        return stat_grid(self.labels['reward'], self.labels['agent/paddle/width'], self.labels['ball/color'])
 
     def print_statistics(self):
         counts, totals, proportions = self.statistics()
