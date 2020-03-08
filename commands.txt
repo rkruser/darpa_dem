@@ -1,0 +1,44 @@
+# Exp 1
+
+python train.py --train_syllabus more_experiments/exp1.json --test_syllabus more_experiments/exp1_test.json --predict_color --nepochs 50 --cutoff 0.5 --samples_per_game 25 --noise 0.01 --model_name pong_ball_color_predictor
+
+python train.py --train_syllabus more_experiments/exp1.json --test_syllabus more_experiments/exp1_test.json --predict_size --nepochs 50 --cutoff 0.5 --samples_per_game 25 --noise 0.01 --model_name pong_paddle_size_predictor
+
+python train.py --train_syllabus more_experiments/exp1.json --test_syllabus more_experiments/exp1_test.json --nepochs 50 --cutoff 0.5 --samples_per_game 25 --noise 0.01 --model_name pong_outcome_predictor
+
+python train.py --train_syllabus more_experiments/exp1.json --test_syllabus more_experiments/exp1_test.json --nepochs 50 --cutoff 0.5 --samples_per_game 25 --noise 0.01 --model_name pong_outcome_predictor_adversary --use_adversary
+
+# Exp 2
+
+python train.py --train_syllabus more_experiments/exp2.json --test_syllabus more_experiments/exp2_intervention.json --predict_color --nepochs 50 --cutoff 0.5 --samples_per_game 25 --model_name pong_ball_color_predictor
+
+Results: Perfect train accuracy, literally zero test accuracy (?)
+
+
+python train.py --train_syllabus more_experiments/exp2.json --test_syllabus more_experiments/exp2_intervention.json --predict_size --nepochs 50 --cutoff 0.5 --samples_per_game 25 --model_name pong_paddle_size_predictor
+
+Results:Perfect train and test accuracy. (So basically it's learning only paddle, not color).
+
+
+python train.py --train_syllabus more_experiments/exp2.json --test_syllabus more_experiments/exp2_intervention.json --nepochs 50 --cutoff 0.5 --samples_per_game 25 --model_name pong_outcome_predictor
+
+python train.py --train_syllabus more_experiments/exp2.json --test_syllabus more_experiments/exp2_intervention.json --nepochs 50 --cutoff 0.5 --samples_per_game 25 --model_name pong_outcome_predictor_adversary --use_adversary
+
+
+
+# Exp 3
+
+python train.py --train_syllabus more_experiments/exp3.json --test_syllabus more_experiments/exp3_intervention.json --predict_color --nepochs 50 --cutoff 0.5 --samples_per_game 25 --model_name pong_ball_color_predictor
+
+Results: 
+
+
+python train.py --train_syllabus more_experiments/exp3.json --test_syllabus more_experiments/exp3_intervention.json --predict_size --nepochs 50 --cutoff 0.5 --samples_per_game 25 --model_name pong_paddle_size_predictor
+
+Results: 
+
+
+python train.py --train_syllabus more_experiments/exp3.json --test_syllabus more_experiments/exp3_intervention.json --nepochs 50 --cutoff 0.5 --samples_per_game 25 --model_name pong_outcome_predictor
+
+python train.py --train_syllabus more_experiments/exp3.json --test_syllabus more_experiments/exp3_intervention.json --nepochs 50 --cutoff 0.5 --samples_per_game 25 --model_name pong_outcome_predictor_adversary --use_adversary
+
