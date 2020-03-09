@@ -145,6 +145,9 @@ class OurPredictor(nn.Module):
         x = self.features(x)
         rx=self.features(rx)
 
+        x = x+0.05*torch.randn(x.size()).to(self.device)
+        rx = rx+0.05*torch.randn(rx.size()).to(self.device)
+
         x = x.view(x.size(0),-1)
         rx = rx.view(rx.size(0),-1)
 

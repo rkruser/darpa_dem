@@ -34,8 +34,8 @@ def train_model(mclass, train_syllabus, test_syllabus,
 #    train_length = int(0.8*len(totalset))
 #    test_length = len(totalset)-train_length
 #    trainset, testset = torch.utils.data.random_split(totalset, (train_length, test_length))
-    trainset, _ = Construct_L2M_Dataset(train_syllabus, train_proportion=1, resize=resize, noise=noise, cutoff=cutoff, samples_per_game=samples_per_game, mode='non_intervene')
-    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1, resize=resize, noise=None, cutoff=cutoff, samples_per_game=samples_per_game, mode='intervene')
+    trainset, _ = Construct_L2M_Dataset(train_syllabus, train_proportion=1, resize=resize, noise=noise, cutoff=cutoff, samples_per_game=samples_per_game)#, mode='non_intervene')
+    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1, resize=resize, noise=None, cutoff=cutoff, samples_per_game=samples_per_game)#, mode='intervene')
 
     print("Train stats:")
     trainset.print_statistics()

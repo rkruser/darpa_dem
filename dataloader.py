@@ -102,8 +102,8 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                 reward_sum = rewards.sum().item() #Must get before cutoff for final score
                 states = torch.Tensor(states).permute(0,3,1,2) / 255.0
                 # Apparently this is in RBG, not RGB, need to rearrange here or in files
-#                color_perm = torch.LongTensor([0,2,1]) # Undo RBG
-#                states = states[:,color_perm, :, :]
+                #color_perm = torch.LongTensor([2,1,0]) # Undo RBG # [0,2,1]
+                #states = states[:,color_perm, :, :]
                 actions = torch.Tensor(actions)
 
                 # If we want to chop off the last part of a game
@@ -215,17 +215,29 @@ class L2M_Pytorch_Dataset(Dataset):
         self.rewards = rewards 
         self.actions = actions
         self.labels = labels
-#        self.noise = noise
+
+        # Force exact correlation for an experiment.
+        self.labels['reward'] = self.labels['agent/paddle/width']
+
         
         quad1 = (self.labels['agent/paddle/width']==0) & (self.labels['bg_color']==0)
         quad2 = (self.labels['agent/paddle/width']==1) & (self.labels['bg_color']==0)
         quad3 = (self.labels['agent/paddle/width']==0) & (self.labels['bg_color']==1)
         quad4 = (self.labels['agent/paddle/width']==1) & (self.labels['bg_color']==1)
-        quadInds = [quad1, quad2, quad3, quad4]
         #assert(quad1.sum()>0 and quad2.sum()>0 and quad3.sum()>0 and quad4.sum()>0)
+            
+        quadInds = [quad1, quad2, quad3, quad4]
 
         self.quadstates = [self.states[inds] for inds in quadInds]
         self.quadlabels = [ {k:self.labels[k][inds] for k in self.labels} for inds in quadInds ]
+
+        # Have only a few training examples in the other quadrants.
+        if quad2.sum()>0 and quad3.sum()>0:
+            self.quadstates[2] = self.quadstates[2][0:3]
+            self.quadstates[3] = self.quadstates[2][0:3]
+            self.quadlabels[2] = {k:self.quadlabels[2][k][0:3] for k in self.quadlabels[2]}
+            self.quadlabels[3] = {k:self.quadlabels[3][k][0:3] for k in self.quadlabels[3]}
+
 
         # Restrict training data only to certain sets
         if mode is not None:
@@ -240,6 +252,14 @@ class L2M_Pytorch_Dataset(Dataset):
             self.actions = self.actions[stateInds]
             self.labels = {k:self.labels[k][stateInds] for k in self.labels}
             self.size = len(self.states)
+            '''
+        else:
+            # This is causing a problem for some reason
+            if quad1.sum()>0 and quad2.sum()>0 and quad3.sum()>0 and quad4.sum()>0:
+                self.states = torch.cat(self.quadstates)
+                self.labels = {k:torch.cat([lab[k] for lab in self.quadlabels]) for k in self.labels}
+                self.size = len(self.states)
+            '''
 
 
     def __len__(self):
@@ -258,9 +278,13 @@ class L2M_Pytorch_Dataset(Dataset):
         quadstates = self.quadstates[quad]
         quadlabels = self.quadlabels[quad]
         quadsize = len(quadstates)
-        randIndex = torch.randint(quadsize, []).item()
-        rand_balanced_state = quadstates[randIndex]
-        rand_balanced_labels = {k:quadlabels[k][randIndex] for k in quadlabels}
+        if len(quadstates) == 0:
+            rand_balanced_state=None
+            rand_balanced_labels=None
+        else:
+            randIndex = torch.randint(quadsize, []).item()
+            rand_balanced_state = quadstates[randIndex]
+            rand_balanced_labels = {k:quadlabels[k][randIndex] for k in quadlabels}
 
 
 #        if self.noise is None:
