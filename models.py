@@ -134,21 +134,26 @@ class OurPredictor(nn.Module):
     def set_output_space(self, output_spaces):
         self.current_output_spaces = output_spaces
 
-    def forward(self, x):
+    def forward(self, x, rx):
         # x probably has shape (batchsize x 3 x 1 x 128 x 128)
         # x 1 is nframes
 #        x = x['10_frames']
 #        x = torch.Tensor(x) #From numpy array to Tensor
         x = x.to(self.device)
+        rx = rx.to(self.device)
 #        x = x[:,:,0,:,:].squeeze(2)
         x = self.features(x)
+        rx=self.features(rx)
+
         x = x.view(x.size(0),-1)
+        rx = rx.view(rx.size(0),-1)
+
         y = self.reward_classifier(x).squeeze()
 
         if self.color_adversary:
-            w = x.detach() # ??
+            w = rx.detach() # ??
             cdetached = self.color_discriminator(w).squeeze()
-            c = self.color_discriminator(x).squeeze() #don't see a way around two versions of same calculation
+            c = self.color_discriminator(rx).squeeze() #don't see a way around two versions of same calculation
         else:
             cdetached = None
             c = None
@@ -204,8 +209,8 @@ class OurPredictor(nn.Module):
         fname = os.path.join(fullfolder, self.model_name+'.pkl')
         iters = 1
         while os.path.exists(fname):
-            print("Warning: model file already exists, press enter to overwrite or type a new model name")
             if ask_rename:
+                print("Warning: model file already exists, press enter to overwrite or type a new model name")
                 newname = input()
             else:
                 newname = fname+'_'+str(iters)
@@ -388,12 +393,12 @@ class OurOptimizer:
         self.device = model.device
         self.lmbda = lmbda
 
-    def calculate_loss(self, y, y_hat):
+    def calculate_loss(self, y, ry, y_hat):
         outcome_predictions = y_hat['outcome_pred']
         color_predictions = y_hat['color_pred']
         adversary_predictions = y_hat['adversary_pred']
         outcome_actual = torch.Tensor(y['reward']).to(self.device)
-        color_actual = torch.Tensor(y['ball/color']).to(self.device) #formerly bg_color
+        color_actual = torch.Tensor(ry['bg_color']).to(self.device) #formerly bg_color
         size_actual = torch.Tensor(y['agent/paddle/width']).to(self.device) #false
 
         outcome_loss = nn.functional.binary_cross_entropy_with_logits(outcome_predictions, outcome_actual)

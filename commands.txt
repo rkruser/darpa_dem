@@ -42,3 +42,18 @@ python train.py --train_syllabus more_experiments/exp3.json --test_syllabus more
 
 python train.py --train_syllabus more_experiments/exp3.json --test_syllabus more_experiments/exp3_intervention.json --nepochs 50 --cutoff 0.5 --samples_per_game 25 --model_name pong_outcome_predictor_adversary --use_adversary
 
+
+
+
+
+# Exp 5
+python train.py --train_syllabus more_experiments/exp5.json --test_syllabus more_experiments/exp5_intervention.json --nepochs 50 --model_name more_exp5 --cutoff 0.5 --samples_per_game 25
+
+python train.py --train_syllabus more_experiments/exp5.json --test_syllabus more_experiments/exp5_intervention.json --nepochs 50 --model_name more_exp5_1 --cutoff 0.5 --samples_per_game 25 --use_adversary
+
+
+# Exp 6
+
+python train.py --train_syllabus more_experiments/exp6.json --test_syllabus more_experiments/exp6_intervention.json --nepochs 50 --model_name more_exp6 --cutoff 0.5 --samples_per_game 25 --gpuid 0
+
+python train.py --train_syllabus more_experiments/exp6.json --test_syllabus more_experiments/exp6_intervention.json --nepochs 50 --model_name more_exp6_adv --cutoff 0.5 --samples_per_game 25 --use_adversary --gpuid 1

@@ -64,11 +64,11 @@ def train_model(mclass, train_syllabus, test_syllabus,
             #print("   ", i)
 #            x = pt[0]
 #            y = {'reward': pt[1], 'color': pt[2]}
-            x, y = pt
+            x, y, rx, ry = pt
             batch_size = len(x)
 
-            y_hat = model.forward(x)
-            loss = optim.calculate_loss(y,y_hat)
+            y_hat = model.forward(x, rx)
+            loss = optim.calculate_loss(y, ry, y_hat)
             model.update(loss)
 
             # Logging
@@ -90,11 +90,11 @@ def train_model(mclass, train_syllabus, test_syllabus,
         for i, pt in enumerate(testloader):
 #            x = pt[0]
 #            y = {'reward': pt[1], 'color': pt[2]}
-            x, y = pt
+            x, y, rx, ry = pt
             batch_size = len(x)
 
-            y_hat = model.forward(x)
-            loss = optim.calculate_loss(y,y_hat)
+            y_hat = model.forward(x,rx)
+            loss = optim.calculate_loss(y,ry,y_hat)
 
             # Logging
             meters.update('testloss', loss['outcome_loss'].item(), batch_size)
@@ -121,7 +121,8 @@ def train_model(mclass, train_syllabus, test_syllabus,
         print(train_grid_average)
         print("Train loss:", meters.average('trainloss'), "Test loss:", meters.average('testloss'))
         print("Train acc:", meters.average('trainacc'), "Test acc:", meters.average('testacc'))
-
+        print("Train adversary acc:", meters.average('trainacc_adv'), 
+              "Test adversary acc:", meters.average('testacc_adv'))
 
 
         test_grid_average = meters.average('testgrid')

@@ -213,6 +213,16 @@ class L2M_Pytorch_Dataset(Dataset):
         self.actions = actions
         self.labels = labels
 #        self.noise = noise
+        
+        quad1 = (self.labels['agent/paddle/width']==0) & (self.labels['bg_color']==0)
+        quad2 = (self.labels['agent/paddle/width']==1) & (self.labels['bg_color']==0)
+        quad3 = (self.labels['agent/paddle/width']==0) & (self.labels['bg_color']==1)
+        quad4 = (self.labels['agent/paddle/width']==1) & (self.labels['bg_color']==1)
+        quadInds = [quad1, quad2, quad3, quad4]
+        #assert(quad1.sum()>0 and quad2.sum()>0 and quad3.sum()>0 and quad4.sum()>0)
+
+        self.quadstates = [self.states[inds] for inds in quadInds]
+        self.quadlabels = [ {k:self.labels[k][inds] for k in self.labels} for inds in quadInds ]
 
     def __len__(self):
         return self.size
@@ -224,14 +234,25 @@ class L2M_Pytorch_Dataset(Dataset):
 #        labels = { 'reward': self.labels['reward'][index], 
 #                                    'bg_color': self.labels['bg_color'][index], 
 #                                    'bot/paddle/width': self.labels['bot/paddle/width'][index] }
+
+
+        quad = torch.randint(4,[]).item()
+        quadstates = self.quadstates[quad]
+        quadlabels = self.quadlabels[quad]
+        quadsize = len(quadstates)
+        randIndex = torch.randint(quadsize, []).item()
+        rand_balanced_state = quadstates[randIndex]
+        rand_balanced_labels = {k:quadlabels[k][randIndex] for k in quadlabels}
+
+
 #        if self.noise is None:
-        return self.states[index], labels
+        return self.states[index], labels, rand_balanced_state, rand_balanced_labels
 #        else:
 #            im = self.states[index]
 #            return im+self.noise*torch.randn(im.size()), labels
 
     def statistics(self):
-        return stat_grid(self.labels['reward'], self.labels['agent/paddle/width'], self.labels['ball/color'])
+        return stat_grid(self.labels['reward'], self.labels['agent/paddle/width'], self.labels['bg_color'])
 
     def print_statistics(self):
         counts, totals, proportions = self.statistics()
