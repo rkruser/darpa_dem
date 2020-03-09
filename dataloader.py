@@ -44,7 +44,8 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                  samples_per_game = None,
                  resize=None,
                  noise=None,
-                 cutoff=None #float for where to cut off the dataset
+                 cutoff=None, #float for where to cut off the dataset
+                 mode=None
                  ):
     name = os.path.basename(os.path.splitext(json_file)[0])
     fullpath = os.path.join(L2DATA, 'data', name, name+'.hdf5')
@@ -157,14 +158,16 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
     test_inds = inds[train_size:]
     train_set = L2M_Pytorch_Dataset(train_size, states[train_inds], 
                                     rewards[train_inds], actions[train_inds],
-                                    {k:labels[k][train_inds] for k in labels})
+                                    {k:labels[k][train_inds] for k in labels},
+                                    mode=mode)
 #                                    {'reward':labels['reward'][train_inds],
 #                                     'bg_color':labels['bg_color'][train_inds],
 #                                     'bot/paddle/width':labels['bot/paddle/width'][train_inds]})
 #                                     noise=noise)
     test_set = L2M_Pytorch_Dataset(test_size, states[test_inds], 
                                     rewards[test_inds], actions[test_inds],
-                                    {k:labels[k][test_inds] for k in labels})
+                                    {k:labels[k][test_inds] for k in labels},
+                                    mode=mode)
 #                                    {'reward':labels['reward'][test_inds],
 #                                     'bg_color':labels['bg_color'][test_inds],
 #                                     'bot/paddle/width':labels['bot/paddle/width'][test_inds]})
@@ -206,7 +209,7 @@ def print_grid(grid, xlabels, ylabels):
         print(xlabels[i]+'  ', grid[i])
 
 class L2M_Pytorch_Dataset(Dataset):
-    def __init__(self, size, states, rewards, actions, labels): #,noise=None):
+    def __init__(self, size, states, rewards, actions, labels, mode=None): #,noise=None):
         self.size = size 
         self.states = states 
         self.rewards = rewards 
@@ -223,6 +226,21 @@ class L2M_Pytorch_Dataset(Dataset):
 
         self.quadstates = [self.states[inds] for inds in quadInds]
         self.quadlabels = [ {k:self.labels[k][inds] for k in self.labels} for inds in quadInds ]
+
+        # Restrict training data only to certain sets
+        if mode is not None:
+            if mode=='non_intervene':
+                print('In non-intervene')
+                stateInds = quad1|quad4
+            else:
+                print('In intervene')
+                stateInds = quad2|quad3
+            self.states = self.states[stateInds]
+            self.rewards = self.rewards[stateInds]
+            self.actions = self.actions[stateInds]
+            self.labels = {k:self.labels[k][stateInds] for k in self.labels}
+            self.size = len(self.states)
+
 
     def __len__(self):
         return self.size

@@ -435,6 +435,56 @@ class OurOptimizer:
 
         return losses
 
+# Color adversary predicts paddle size instead.
+class ReverseOptimizer:
+    def __init__(self, model, lmbda=1):
+        self.device = model.device
+        self.lmbda = lmbda
+
+    def calculate_loss(self, y, ry, y_hat):
+        outcome_predictions = y_hat['outcome_pred']
+        color_predictions = y_hat['color_pred']
+        adversary_predictions = y_hat['adversary_pred']
+        outcome_actual = torch.Tensor(y['reward']).to(self.device)
+        size_actual = torch.Tensor(y['agent/paddle/width']).to(self.device) #false
+        #color_actual = torch.Tensor(ry['bg_color']).to(self.device) #formerly bg_color
+        color_actual = torch.Tensor(ry['agent/paddle/width']).to(self.device) #formerly bg_color
+
+
+        outcome_loss = nn.functional.binary_cross_entropy_with_logits(outcome_predictions, outcome_actual)
+        outcome_num_correct = ((outcome_predictions > 0).int() == outcome_actual.int()).sum().float()
+        outcome_acc = outcome_num_correct / len(outcome_actual)
+
+        sumgrid, totalgrid, proportiongrid = stat_grid(torch.sigmoid(outcome_predictions), size_actual, color_actual)
+
+        if color_predictions is not None:
+            color_loss = nn.functional.binary_cross_entropy_with_logits(color_predictions, 1-color_actual)
+        else:
+            color_loss = 0
+        if adversary_predictions is not None:
+            adversary_loss = nn.functional.binary_cross_entropy_with_logits(adversary_predictions, color_actual)
+            adversary_num_correct = ((adversary_predictions > 0).int() == color_actual.int()).sum().float()
+            adversary_acc = adversary_num_correct / len(color_actual)
+        else:
+            adversary_loss = None
+            adversary_acc = None
+            adversary_num_correct = None
+
+        outcome_loss = outcome_loss+self.lmbda*color_loss
+
+        losses = { 'outcome_loss': outcome_loss,
+                   'adversary_loss': adversary_loss,
+                   'outcome_acc': outcome_acc,
+                   'outcome_num_correct': outcome_num_correct,
+                   'adversary_acc': adversary_acc,
+                   'adversary_num_correct': adversary_num_correct,
+                   'sumgrid': sumgrid.to('cpu'),
+                   'totalgrid': totalgrid.to('cpu'),
+                   'proportiongrid': proportiongrid.to('cpu'),
+                   }
+
+        return losses
+
 
 class BallColorOptimizer:
     def __init__(self, model, lmbda=1):

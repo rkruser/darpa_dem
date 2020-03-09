@@ -7,7 +7,7 @@ import learnkit
 from learnkit.utils import module_relative_file
 
 from models import OurPredictor, OurSimpleRewardPredictor, OurOptimizer, Meters, OptWithPaddleLoss
-from models import BallColorOptimizer, PaddleSizeOptimizer
+from models import BallColorOptimizer, PaddleSizeOptimizer, ReverseOptimizer
 
 from dataloader import L2DATA, Construct_L2M_Dataset
 
@@ -34,8 +34,8 @@ def train_model(mclass, train_syllabus, test_syllabus,
 #    train_length = int(0.8*len(totalset))
 #    test_length = len(totalset)-train_length
 #    trainset, testset = torch.utils.data.random_split(totalset, (train_length, test_length))
-    trainset, _ = Construct_L2M_Dataset(train_syllabus, train_proportion=1, resize=resize, noise=noise, cutoff=cutoff, samples_per_game=samples_per_game)
-    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1, resize=resize, noise=None, cutoff=cutoff, samples_per_game=samples_per_game)
+    trainset, _ = Construct_L2M_Dataset(train_syllabus, train_proportion=1, resize=resize, noise=noise, cutoff=cutoff, samples_per_game=samples_per_game, mode='non_intervene')
+    testset, _ = Construct_L2M_Dataset(test_syllabus, train_proportion=1, resize=resize, noise=None, cutoff=cutoff, samples_per_game=samples_per_game, mode='intervene')
 
     print("Train stats:")
     trainset.print_statistics()
@@ -171,6 +171,7 @@ if __name__ == '__main__':
     parser.add_argument('--paddle_predictor', action='store_true')
     parser.add_argument('--predict_size',action='store_true')
     parser.add_argument('--predict_color',action='store_true')
+    parser.add_argument('--reverse_adversary',action='store_true')
    
     args = parser.parse_args()
     
@@ -189,7 +190,9 @@ if __name__ == '__main__':
         OptClass = PaddleSizeOptimizer
     elif args.predict_color: #Predict *ball* color instead of reward
         OptClass = BallColorOptimizer
-        
+    elif args.reverse_adversary:
+        print("Using reverse adversary")
+        OptClass = ReverseOptimizer
 
         
     loadmodel = False

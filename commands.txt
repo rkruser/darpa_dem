@@ -57,3 +57,7 @@ python train.py --train_syllabus more_experiments/exp5.json --test_syllabus more
 python train.py --train_syllabus more_experiments/exp6.json --test_syllabus more_experiments/exp6_intervention.json --nepochs 50 --model_name more_exp6 --cutoff 0.5 --samples_per_game 25 --gpuid 0
 
 python train.py --train_syllabus more_experiments/exp6.json --test_syllabus more_experiments/exp6_intervention.json --nepochs 50 --model_name more_exp6_adv --cutoff 0.5 --samples_per_game 25 --use_adversary --gpuid 1
+
+
+Next thing to do: Artificially impose labels, see what happens.
+Also: use breakout.
