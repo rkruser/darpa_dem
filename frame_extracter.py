@@ -1,5 +1,6 @@
 import os
 import torch
+import numpy as np
 from torchvision.utils import save_image
 from dataloader import Construct_L2M_Dataset
 import imageio
@@ -8,21 +9,32 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--syllabus', default='experiment1.json')
+parser.add_argument('--fname', default='vid.gif')
 args = parser.parse_args()
 
-dataset, _ = Construct_L2M_Dataset(args.syllabus, train_proportion=1, resize=None)
+dataset, _ = Construct_L2M_Dataset(args.syllabus, train_proportion=1, resize=None, no_rand=True)
 
 size = len(dataset)
 print(size)
 
+'''
 first_im, _, _, _ = dataset[0]
 mid_im, _, _, _ = dataset[size//2]
 last_im, _, _, _ = dataset[-1]
 
 syllabus = os.path.splitext(os.path.basename(args.syllabus))[0]
+'''
 
 #first_im = 255*first_im
 #print(first_im[:,50,50],first_im[:,55,50],first_im[:,65,65],first_im[:,65,70])
+
+vid = dataset.states
+vid = vid.numpy()
+vid = np.transpose((vid*255).astype('uint8'),(0,2,3,1))
+imageio.mimsave(args.fname, vid, fps=10)
+
+
+
 
 '''
 M = torch.Tensor([[1.9615,0,0],[0.5708,2.5213,-0.9898],[-1.5472,-0.1236,2.5460]])

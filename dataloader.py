@@ -45,7 +45,8 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                  resize=None,
                  noise=None,
                  cutoff=None, #float for where to cut off the dataset
-                 mode=None
+                 mode=None,
+                 no_rand=False,
                  ):
     name = os.path.basename(os.path.splitext(json_file)[0])
     fullpath = os.path.join(L2DATA, 'data', name, name+'.hdf5')
@@ -102,8 +103,8 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                 reward_sum = rewards.sum().item() #Must get before cutoff for final score
                 states = torch.Tensor(states).permute(0,3,1,2) / 255.0
                 # Apparently this is in RBG, not RGB, need to rearrange here or in files
-                color_perm = torch.LongTensor([2,0,1]) # Undo RBG # [0,2,1]
-                #states = states[:,color_perm, :, :]
+#                color_perm = torch.LongTensor([0,2,1]) # Undo RBG # [0,2,1]  # 201 ?
+#                states = states[:,color_perm, :, :]
                 actions = torch.Tensor(actions)
 
                 # If we want to chop off the last part of a game
@@ -153,7 +154,10 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
 
     train_size = int(train_proportion*size)
     test_size = size - train_size
-    inds = torch.randperm(size)
+    if no_rand:
+        inds = torch.arange(size)
+    else:
+        inds = torch.randperm(size)
     train_inds = inds[:train_size]
     test_inds = inds[train_size:]
     train_set = L2M_Pytorch_Dataset(train_size, states[train_inds], 
