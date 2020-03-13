@@ -102,7 +102,7 @@ def Construct_L2M_Dataset(json_file, train_proportion=0.8, color_map = standard_
                 reward_sum = rewards.sum().item() #Must get before cutoff for final score
                 states = torch.Tensor(states).permute(0,3,1,2) / 255.0
                 # Apparently this is in RBG, not RGB, need to rearrange here or in files
-                #color_perm = torch.LongTensor([2,1,0]) # Undo RBG # [0,2,1]
+                color_perm = torch.LongTensor([2,0,1]) # Undo RBG # [0,2,1]
                 #states = states[:,color_perm, :, :]
                 actions = torch.Tensor(actions)
 
